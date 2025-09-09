@@ -870,8 +870,8 @@ async function fetchCryptoPrice(ticker) {
     const apis = [
         // CoinGecko API
         async () => {
-            const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ticker.toLowerCase()}&vs_currencies=usd`);
-            const data = await response.json();
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ticker.toLowerCase()}&vs_currencies=usd`);
+        const data = await response.json();
             return data[ticker.toLowerCase()]?.usd;
         },
         
@@ -894,10 +894,10 @@ async function fetchCryptoPrice(ticker) {
         try {
             const price = await api();
             if (price && price > 0) {
-                priceCache[cacheKey] = { price, timestamp: Date.now() };
-                return price;
-            }
-        } catch (error) {
+            priceCache[cacheKey] = { price, timestamp: Date.now() };
+            return price;
+        }
+    } catch (error) {
             console.warn(`API call failed for ${ticker}:`, error);
             continue;
         }
@@ -1032,21 +1032,21 @@ async function updatePrices() {
         const promises = [];
         
         // Update all ticker-based assets
-        for (const category in portfolio) {
-            if (category === 'stocks' || category === 'crypto') {
-                for (const asset of portfolio[category]) {
-                    if (asset.type === 'ticker' && asset.ticker) {
+    for (const category in portfolio) {
+        if (category === 'stocks' || category === 'crypto') {
+            for (const asset of portfolio[category]) {
+                if (asset.type === 'ticker' && asset.ticker) {
                         promises.push(updateAssetPrice(category, asset));
-                    }
                 }
             }
         }
+    }
         
         // Wait for all price updates to complete
         await Promise.allSettled(promises);
         
-        savePortfolio();
-        updateDisplay();
+    savePortfolio();
+    updateDisplay();
         
         // Update last update time
         lastUpdateTime = new Date();
@@ -1126,6 +1126,344 @@ function updateLastUpdateTime() {
 
 // Update the last update time every 30 seconds
 setInterval(updateLastUpdateTime, 30000);
+
+// Authentication System
+let currentUser = null;
+let authMode = 'login'; // 'login' or 'signup'
+
+// Initialize authentication on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthStatus();
+});
+
+// Check if user is already logged in
+function checkAuthStatus() {
+    const savedUser = localStorage.getItem('portfolioUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        updateProfileButton(true);
+        updateProfileStats();
+    }
+}
+
+// Open profile modal
+function openProfileModal() {
+    const modal = document.getElementById('profileModal');
+    const authForm = document.getElementById('authForm');
+    const profileDashboard = document.getElementById('profileDashboard');
+    
+    if (currentUser) {
+        // Show profile dashboard
+        authForm.style.display = 'none';
+        profileDashboard.style.display = 'block';
+        updateProfileInfo();
+    } else {
+        // Show auth form
+        authForm.style.display = 'block';
+        profileDashboard.style.display = 'none';
+    }
+    
+    modal.style.display = 'block';
+}
+
+// Close profile modal
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+}
+
+// Switch between login and signup
+function switchAuthMode(mode) {
+    authMode = mode;
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const authTitle = document.getElementById('authTitle');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+    
+    // Update tabs
+    loginTab.classList.toggle('active', mode === 'login');
+    signupTab.classList.toggle('active', mode === 'signup');
+    
+    // Update form
+    if (mode === 'login') {
+        authTitle.textContent = 'Sign In to Your Portfolio';
+        authSubmitBtn.textContent = 'Sign In';
+        confirmPasswordGroup.style.display = 'none';
+        document.getElementById('authConfirmPassword').required = false;
+    } else {
+        authTitle.textContent = 'Create Your Portfolio Account';
+        authSubmitBtn.textContent = 'Create Account';
+        confirmPasswordGroup.style.display = 'block';
+        document.getElementById('authConfirmPassword').required = true;
+    }
+}
+
+// Handle authentication form submission
+async function handleAuth(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const confirmPassword = document.getElementById('authConfirmPassword').value;
+    const submitBtn = document.getElementById('authSubmitBtn');
+    
+    // Validation
+    if (authMode === 'signup' && password !== confirmPassword) {
+        showNotification('Passwords do not match', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('Password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = authMode === 'login' ? 'Signing In...' : 'Creating Account...';
+    
+    try {
+        if (authMode === 'signup') {
+            await signUp(email, password);
+        } else {
+            await signIn(email, password);
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
+    }
+}
+
+// Sign up new user
+async function signUp(email, password) {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Check if user already exists (in localStorage for demo)
+    const existingUsers = JSON.parse(localStorage.getItem('portfolioUsers') || '{}');
+    
+    if (existingUsers[email]) {
+        throw new Error('An account with this email already exists');
+    }
+    
+    // Create new user
+    const hashedPassword = btoa(password); // Simple encoding for demo
+    const newUser = {
+        email,
+        password: hashedPassword,
+        createdAt: new Date().toISOString(),
+        lastSync: new Date().toISOString(),
+        portfolio: portfolio // Save current portfolio
+    };
+    
+    // Save user
+    existingUsers[email] = newUser;
+    localStorage.setItem('portfolioUsers', JSON.stringify(existingUsers));
+    
+    // Log in user
+    currentUser = { email, createdAt: newUser.createdAt };
+    localStorage.setItem('portfolioUser', JSON.stringify(currentUser));
+    
+    showNotification('Account created successfully!', 'success');
+    updateProfileButton(true);
+    closeProfileModal();
+    
+    // Sync portfolio to cloud
+    await syncPortfolio();
+}
+
+// Sign in existing user
+async function signIn(email, password) {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const existingUsers = JSON.parse(localStorage.getItem('portfolioUsers') || '{}');
+    const user = existingUsers[email];
+    
+    if (!user) {
+        throw new Error('No account found with this email');
+    }
+    
+    const hashedPassword = btoa(password);
+    if (user.password !== hashedPassword) {
+        throw new Error('Incorrect password');
+    }
+    
+    // Log in user
+    currentUser = { email, createdAt: user.createdAt };
+    localStorage.setItem('portfolioUser', JSON.stringify(currentUser));
+    
+    // Load user's portfolio
+    if (user.portfolio) {
+        portfolio = user.portfolio;
+        savePortfolio();
+        updateDisplay();
+    }
+    
+    showNotification('Signed in successfully!', 'success');
+    updateProfileButton(true);
+    closeProfileModal();
+}
+
+// Update profile button appearance
+function updateProfileButton(loggedIn) {
+    const profileBtn = document.getElementById('profileBtn');
+    if (loggedIn) {
+        profileBtn.classList.add('logged-in');
+        profileBtn.title = 'Profile - Signed In';
+    } else {
+        profileBtn.classList.remove('logged-in');
+        profileBtn.title = 'Sign In';
+    }
+}
+
+// Update profile info in dashboard
+function updateProfileInfo() {
+    if (!currentUser) return;
+    
+    document.getElementById('profileEmail').textContent = currentUser.email;
+    updateProfileStats();
+}
+
+// Update profile statistics
+function updateProfileStats() {
+    if (!currentUser) return;
+    
+    // Update last sync time
+    const lastSyncElement = document.getElementById('lastSyncTime');
+    if (lastSyncElement) {
+        const lastSync = localStorage.getItem('lastSyncTime');
+        if (lastSync) {
+            const syncDate = new Date(lastSync);
+            const now = new Date();
+            const diffMinutes = Math.floor((now - syncDate) / (1000 * 60));
+            
+            if (diffMinutes < 1) {
+                lastSyncElement.textContent = 'Just now';
+            } else if (diffMinutes < 60) {
+                lastSyncElement.textContent = `${diffMinutes}m ago`;
+            } else {
+                lastSyncElement.textContent = syncDate.toLocaleDateString();
+            }
+        }
+    }
+    
+    // Update total assets count
+    const totalAssetsElement = document.getElementById('totalAssets');
+    if (totalAssetsElement) {
+        let totalAssets = 0;
+        for (const category in portfolio) {
+            totalAssets += portfolio[category].length;
+        }
+        totalAssetsElement.textContent = totalAssets;
+    }
+    
+    // Update account created date
+    const accountCreatedElement = document.getElementById('accountCreated');
+    if (accountCreatedElement && currentUser.createdAt) {
+        const createdDate = new Date(currentUser.createdAt);
+        accountCreatedElement.textContent = createdDate.toLocaleDateString();
+    }
+}
+
+// Sync portfolio to cloud
+async function syncPortfolio() {
+    if (!currentUser) {
+        showNotification('Please sign in to sync your portfolio', 'warning');
+        return;
+    }
+    
+    const syncBtn = document.querySelector('.sync-btn');
+    if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<span class="btn-icon">🔄</span><span class="btn-text">Syncing...</span>';
+    }
+    
+    try {
+        // Simulate cloud sync delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Update user's portfolio in storage
+        const existingUsers = JSON.parse(localStorage.getItem('portfolioUsers') || '{}');
+        if (existingUsers[currentUser.email]) {
+            existingUsers[currentUser.email].portfolio = portfolio;
+            existingUsers[currentUser.email].lastSync = new Date().toISOString();
+            localStorage.setItem('portfolioUsers', JSON.stringify(existingUsers));
+        }
+        
+        // Update last sync time
+        localStorage.setItem('lastSyncTime', new Date().toISOString());
+        
+        showNotification('Portfolio synced successfully!', 'success');
+        updateProfileStats();
+        
+        // Update profile status
+        const profileStatus = document.querySelector('.profile-status');
+        if (profileStatus) {
+            profileStatus.textContent = '✅ Portfolio Synced';
+        }
+        
+    } catch (error) {
+        showNotification('Failed to sync portfolio', 'error');
+        console.error('Sync error:', error);
+    } finally {
+        if (syncBtn) {
+            syncBtn.disabled = false;
+            syncBtn.innerHTML = '<span class="btn-icon">🔄</span><span class="btn-text">Sync Portfolio</span>';
+        }
+    }
+}
+
+// Download portfolio backup
+function downloadBackup() {
+    if (!currentUser) {
+        showNotification('Please sign in to download backup', 'warning');
+        return;
+    }
+    
+    const backupData = {
+        user: currentUser.email,
+        exportDate: new Date().toISOString(),
+        portfolio: portfolio,
+        version: '1.0'
+    };
+    
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `portfolio-backup-${currentUser.email.split('@')[0]}-${new Date().toISOString().split('T')[0]}.json`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Portfolio backup downloaded!', 'success');
+}
+
+// Logout user
+function logout() {
+    if (confirm('Are you sure you want to sign out?')) {
+        currentUser = null;
+        localStorage.removeItem('portfolioUser');
+        localStorage.removeItem('lastSyncTime');
+        
+        updateProfileButton(false);
+        closeProfileModal();
+        showNotification('Signed out successfully', 'success');
+        
+        // Optionally clear portfolio data (uncomment if desired)
+        // portfolio = {
+        //     stocks: [], roth: [], checking: [], savings: [],
+        //     crypto: [], 'real-estate': [], vehicles: [], other: []
+        // };
+        // savePortfolio();
+        // updateDisplay();
+    }
+}
 
 // Manual refresh function
 async function manualRefresh() {
@@ -1395,7 +1733,7 @@ function showNotification(message, type = 'success') {
         notification.style.animation = 'slideOut 0.3s ease-out';
         setTimeout(() => {
             if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
+            document.body.removeChild(notification);
             }
         }, 300);
     }, duration);

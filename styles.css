@@ -916,4 +916,202 @@ body {
 
 .quick-add-btn.vehicles:hover {
     border-color: #ff6b35;
+}
+
+/* Profile Button */
+.profile-btn {
+    position: relative;
+}
+
+.profile-btn::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #00d4aa;
+    border-radius: 50%;
+    display: none;
+}
+
+.profile-btn.logged-in::after {
+    display: block;
+}
+
+/* Authentication Modal */
+.profile-modal {
+    max-width: 400px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.auth-form {
+    padding: 0;
+}
+
+.auth-subtitle {
+    color: #999999;
+    font-size: 14px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.auth-tabs {
+    display: flex;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #333333;
+}
+
+.auth-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #666666;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.auth-tab.active {
+    color: #0052ff;
+    border-bottom-color: #0052ff;
+}
+
+.auth-tab:hover {
+    color: #ffffff;
+}
+
+.auth-footer {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.auth-note {
+    color: #666666;
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Profile Dashboard */
+.profile-dashboard {
+    padding: 0;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #0a0a0a;
+    border-radius: 12px;
+}
+
+.profile-avatar {
+    width: 60px;
+    height: 60px;
+    background: #0052ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.profile-info h3 {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.profile-status {
+    color: #00d4aa;
+    font-size: 14px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.profile-btn {
+    background: #1a1a1a;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.profile-btn:hover {
+    background: #333333;
+    border-color: #0052ff;
+}
+
+.profile-btn.sync-btn:hover {
+    border-color: #00d4aa;
+}
+
+.profile-btn.backup-btn:hover {
+    border-color: #0052ff;
+}
+
+.profile-btn.logout-btn:hover {
+    border-color: #ff4444;
+    background: #2a1a1a;
+}
+
+.btn-icon {
+    font-size: 16px;
+}
+
+.btn-text {
+    flex: 1;
+    text-align: left;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 20px;
+    background: #0a0a0a;
+    border-radius: 12px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.stat-label {
+    color: #666666;
+    font-size: 14px;
+}
+
+.stat-value {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
 } 

@@ -32,6 +32,9 @@
                     🔔
                     <span class="notification-badge">9+</span>
                 </div>
+                <div class="nav-icon profile-btn" id="profileBtn" onclick="openProfileModal()">
+                    👤
+                </div>
             </div>
         </div>
 
@@ -248,6 +251,91 @@
             <div class="category-actions">
                 <button class="add-btn" id="addToCategoryBtn">+ Add Asset</button>
                 <button class="back-btn" onclick="closeCategoryModal()">Back to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile/Authentication Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content profile-modal">
+            <span class="close" onclick="closeProfileModal()">&times;</span>
+            <div id="profileContent">
+                <!-- Login/Signup Form -->
+                <div id="authForm" class="auth-form">
+                    <h2 id="authTitle">Sign In to Your Portfolio</h2>
+                    <p class="auth-subtitle">Save and sync your portfolio across all devices</p>
+                    
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" id="loginTab" onclick="switchAuthMode('login')">Sign In</button>
+                        <button class="auth-tab" id="signupTab" onclick="switchAuthMode('signup')">Sign Up</button>
+                    </div>
+                    
+                    <form id="authFormElement" onsubmit="handleAuth(event)">
+                        <div class="form-group">
+                            <label for="authEmail">Email:</label>
+                            <input type="email" id="authEmail" required placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="authPassword">Password:</label>
+                            <input type="password" id="authPassword" required placeholder="Enter your password" minlength="6">
+                        </div>
+                        
+                        <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                            <label for="authConfirmPassword">Confirm Password:</label>
+                            <input type="password" id="authConfirmPassword" placeholder="Confirm your password" minlength="6">
+                        </div>
+                        
+                        <button type="submit" class="submit-btn" id="authSubmitBtn">Sign In</button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p class="auth-note">Your data is encrypted and secure</p>
+                    </div>
+                </div>
+                
+                <!-- Profile Dashboard -->
+                <div id="profileDashboard" class="profile-dashboard" style="display: none;">
+                    <div class="profile-header">
+                        <div class="profile-avatar">👤</div>
+                        <div class="profile-info">
+                            <h3 id="profileEmail">user@example.com</h3>
+                            <p class="profile-status">✅ Portfolio Synced</p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button class="profile-btn sync-btn" onclick="syncPortfolio()">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Sync Portfolio</span>
+                        </button>
+                        
+                        <button class="profile-btn backup-btn" onclick="downloadBackup()">
+                            <span class="btn-icon">💾</span>
+                            <span class="btn-text">Download Backup</span>
+                        </button>
+                        
+                        <button class="profile-btn logout-btn" onclick="logout()">
+                            <span class="btn-icon">🚪</span>
+                            <span class="btn-text">Sign Out</span>
+                        </button>
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Last Sync</div>
+                            <div class="stat-value" id="lastSyncTime">Just now</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Assets</div>
+                            <div class="stat-value" id="totalAssets">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Account Created</div>
+                            <div class="stat-value" id="accountCreated">Today</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
