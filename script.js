@@ -124,7 +124,10 @@ function initializeChart() {
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return `$${context.parsed.y.toLocaleString()}`;
+                                return `$${context.parsed.y.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}`;
                             }
                         }
                     }
@@ -190,8 +193,13 @@ function initializeChart() {
                                 const label = context.label || '';
                                 const value = context.parsed;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                const formattedValue = formatZillowPrice(value);
+                                const percentage = ((value / total) * 100).toFixed(2);
+                                const formattedValue = value.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD',
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
                                 return `${label}: ${formattedValue} (${percentage}%)`;
                             }
                         }
@@ -249,14 +257,19 @@ function initializeChart() {
     }
 }
 
-// Format value like Zillow prices
+// Format value like Zillow prices with proper decimal places
 function formatZillowPrice(value) {
     if (value >= 1000000) {
         return `$${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
-        return `$${(value / 1000).toFixed(0)}k`;
+        return `$${(value / 1000).toFixed(1)}k`;
     } else {
-        return `$${value.toLocaleString()}`;
+        return value.toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     }
 }
 
@@ -406,8 +419,11 @@ function updateDisplay() {
     const total = calculateTotalValue();
     const dailyChange = calculateDailyChange();
     
-    // Update total balance
-    document.getElementById('totalAmount').textContent = total.toLocaleString();
+    // Update total balance with proper formatting
+    document.getElementById('totalAmount').textContent = total.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
     
     // Update daily change
     document.getElementById('dailyChange').textContent = dailyChange.amount.toFixed(2);
@@ -440,7 +456,12 @@ function updateCategoryAmounts() {
         const total = portfolio[category].reduce((sum, asset) => sum + (asset.value || 0), 0);
         const element = document.getElementById(elementId);
         if (element) {
-            element.textContent = `$${total.toLocaleString()}`;
+            element.textContent = total.toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
     }
     
@@ -482,7 +503,12 @@ function updateAssetBreakdown() {
                 <div class="asset-icon">💰</div>
                 <div class="asset-info">
                     <div class="asset-name">Cash</div>
-                    <div class="asset-amount">$${cashTotal.toLocaleString()}</div>
+                    <div class="asset-amount">${cashTotal.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}</div>
                 </div>
                 <div class="asset-arrow">→</div>
             </div>
@@ -497,7 +523,12 @@ function updateAssetBreakdown() {
                     <div class="asset-icon">${config.icon}</div>
                     <div class="asset-info">
                         <div class="asset-name">${config.name}</div>
-                        <div class="asset-amount">$${categoryTotals[category].toLocaleString()}</div>
+                        <div class="asset-amount">${categoryTotals[category].toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: 'USD',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}</div>
                     </div>
                     <div class="asset-arrow">→</div>
                 </div>
@@ -587,7 +618,12 @@ function updateCryptoListings() {
                         <div class="mini-chart">📈</div>
                     </div>
                     <div class="crypto-right">
-                        <div class="crypto-price" id="crypto-price-${index}">$${(asset.price || 0).toFixed(2)}</div>
+                        <div class="crypto-price" id="crypto-price-${index}">${(asset.price || 0).toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: 'USD',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}</div>
                         <div class="crypto-change ${changeClass}" id="crypto-change-${index}">
                             ${changeSymbol} ${changePercent}%
                         </div>
@@ -610,10 +646,20 @@ async function fetchSampleCryptoPrices() {
         const ethPriceEl = document.getElementById('eth-sample-price');
         
         if (btcPriceEl && btcPrice > 0) {
-            btcPriceEl.textContent = `$${btcPrice.toLocaleString()}`;
+            btcPriceEl.textContent = btcPrice.toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
         if (ethPriceEl && ethPrice > 0) {
-            ethPriceEl.textContent = `$${ethPrice.toLocaleString()}`;
+            ethPriceEl.textContent = ethPrice.toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
     } catch (error) {
         console.error('Error fetching sample crypto prices:', error);
@@ -1071,7 +1117,11 @@ function updatePortfolioValue() {
     // Update total balance with smooth animation
     const totalElement = document.getElementById('totalAmount');
     if (totalElement) {
-        animateValueChange(totalElement, total.toLocaleString());
+        const formattedTotal = total.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        animateValueChange(totalElement, formattedTotal);
     }
     
     // Update daily change
@@ -1581,7 +1631,12 @@ function renderCategoryAssets(category) {
                 <div class="category-asset-item">
                     <div class="asset-item-header">
                         <div class="asset-item-name">${asset.name}</div>
-                        <div class="asset-item-value">$${asset.value.toLocaleString()}</div>
+                        <div class="asset-item-value">${asset.value.toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: 'USD',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}</div>
                     </div>
                     <div class="asset-item-details">
                         ${details.map(detail => `<div class="asset-item-detail">${detail}</div>`).join('')}
