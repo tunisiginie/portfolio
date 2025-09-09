@@ -215,40 +215,23 @@
                         <button type="button" id="fetchPriceBtn" class="fetch-btn">Fetch Current Price</button>
                     </div>
                     
-                    <!-- Input method selector -->
+                    <!-- Dynamic input toggle -->
                     <div class="form-group">
-                        <label>Input Method:</label>
-                        <div class="input-method-selector">
-                            <label class="radio-option">
-                                <input type="radio" name="inputMethod" value="shares" id="sharesMethodRadio" checked>
-                                <span class="radio-custom"></span>
-                                Number of Shares
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="inputMethod" value="totalValue" id="totalValueMethodRadio">
-                                <span class="radio-custom"></span>
-                                Total Value
-                            </label>
+                        <div class="input-toggle-container">
+                            <button type="button" id="inputToggleBtn" class="input-toggle-btn" onclick="toggleInputMode()">
+                                Switch to Value Input
+                            </button>
                         </div>
                     </div>
                     
-                    <!-- Shares input -->
-                    <div class="form-group" id="sharesInputGroup">
-                        <label for="sharesOwned" id="quantityLabel">Number of Shares:</label>
-                        <input type="number" id="sharesOwned" step="0.000001" min="0" placeholder="e.g., 10.5" oninput="calculateFromShares()">
-                    </div>
-                    
-                    <!-- Total value input -->
-                    <div class="form-group" id="totalValueInputGroup" style="display: none;">
-                        <label for="totalValueInput">Total Value ($):</label>
-                        <input type="number" id="totalValueInput" step="0.01" min="0" placeholder="e.g., 1000.00" oninput="calculateFromTotalValue()">
+                    <!-- Dynamic input field -->
+                    <div class="form-group">
+                        <label for="dynamicInput" id="dynamicInputLabel">Number of Shares:</label>
+                        <input type="number" id="dynamicInput" step="0.000001" min="0" placeholder="e.g., 10.5" oninput="calculateDynamicValue()">
                     </div>
                     
                     <div class="form-group">
-                        <label>Calculated Total Value: <span id="calculatedValue">$0.00</span></label>
-                    </div>
-                    <div class="form-group">
-                        <label>Calculated Shares: <span id="calculatedShares">0</span></label>
+                        <label>Calculated Result: <span id="calculatedResult">$0.00</span></label>
                     </div>
                 </div>
                 
@@ -364,5 +347,11 @@
     </div>
 
     <script src="script.js"></script>
+    
+    <!-- Vercel Analytics -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html> 

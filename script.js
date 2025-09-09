@@ -164,7 +164,26 @@ function initializeChart() {
                 },
                 scales: {
                     x: {
-                        display: false
+                        display: true,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#666666',
+                            font: {
+                                size: 10
+                            },
+                            maxTicksLimit: 6,
+                            callback: function(value, index, values) {
+                                // Only show every nth label to avoid crowding
+                                const totalTicks = values.length;
+                                const showEveryNth = Math.ceil(totalTicks / 5);
+                                if (index % showEveryNth === 0 || index === totalTicks - 1) {
+                                    return this.getLabelForValue(value);
+                                }
+                                return '';
+                            }
+                        }
                     },
                     y: {
                         display: false
@@ -434,6 +453,13 @@ function switchTimeframe(timeframe) {
     // Update chart if it's a line chart
     if (currentChartType === 'line') {
         updateChart();
+    }
+    
+    // Track timeframe change for analytics
+    if (window.va) {
+        window.va('track', 'Chart Timeframe Changed', {
+            timeframe: timeframe
+        });
     }
 }
 
@@ -878,23 +904,16 @@ function setupModals() {
         this.value = this.value.toUpperCase();
     }
     
-    sharesOwned.oninput = function() {
-        updateCalculatedValue();
-    }
-    
     fetchPriceBtn.onclick = function() {
         fetchPrice();
     }
     
-    // Setup input method radio buttons
-    const sharesMethodRadio = document.getElementById('sharesMethodRadio');
-    const totalValueMethodRadio = document.getElementById('totalValueMethodRadio');
-    
-    if (sharesMethodRadio) {
-        sharesMethodRadio.onchange = toggleInputMethod;
-    }
-    if (totalValueMethodRadio) {
-        totalValueMethodRadio.onchange = toggleInputMethod;
+    // Setup dynamic input
+    const dynamicInput = document.getElementById('dynamicInput');
+    if (dynamicInput) {
+        dynamicInput.oninput = function() {
+            calculateDynamicValue();
+        }
     }
 }
 
@@ -921,52 +940,54 @@ function updateCalculatedValue() {
     calculateFromShares();
 }
 
-// Calculate total value from shares
-function calculateFromShares() {
-    const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
-    const shares = parseFloat(document.getElementById('sharesOwned').value) || 0;
-    const calculatedValue = currentPrice * shares;
-    
-    document.getElementById('calculatedValue').textContent = `$${calculatedValue.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    })}`;
-    document.getElementById('calculatedShares').textContent = shares.toFixed(6);
-}
+// Track current input mode (true = shares, false = value)
+let isSharesMode = true;
 
-// Calculate shares from total value
-function calculateFromTotalValue() {
+// Calculate dynamic value based on current mode
+function calculateDynamicValue() {
     const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
-    const totalValue = parseFloat(document.getElementById('totalValueInput').value) || 0;
-    const calculatedShares = currentPrice > 0 ? totalValue / currentPrice : 0;
+    const inputValue = parseFloat(document.getElementById('dynamicInput').value) || 0;
     
-    document.getElementById('calculatedValue').textContent = `$${totalValue.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    })}`;
-    document.getElementById('calculatedShares').textContent = calculatedShares.toFixed(6);
-}
-
-// Toggle input method
-function toggleInputMethod() {
-    const sharesMethodRadio = document.getElementById('sharesMethodRadio');
-    const totalValueMethodRadio = document.getElementById('totalValueMethodRadio');
-    const sharesInputGroup = document.getElementById('sharesInputGroup');
-    const totalValueInputGroup = document.getElementById('totalValueInputGroup');
-    
-    if (sharesMethodRadio.checked) {
-        sharesInputGroup.style.display = 'block';
-        totalValueInputGroup.style.display = 'none';
-        // Clear total value input
-        document.getElementById('totalValueInput').value = '';
-        calculateFromShares();
-    } else if (totalValueMethodRadio.checked) {
-        sharesInputGroup.style.display = 'none';
-        totalValueInputGroup.style.display = 'block';
-        // Clear shares input
-        document.getElementById('sharesOwned').value = '';
-        calculateFromTotalValue();
+    let result;
+    if (isSharesMode) {
+        // Input is shares, calculate total value
+        result = currentPrice * inputValue;
+        document.getElementById('calculatedResult').textContent = `Total Value: $${result.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    } else {
+        // Input is total value, calculate shares
+        result = currentPrice > 0 ? inputValue / currentPrice : 0;
+        document.getElementById('calculatedResult').textContent = `Shares: ${result.toFixed(6)}`;
     }
+}
+
+// Toggle between shares and value input mode
+function toggleInputMode() {
+    const toggleBtn = document.getElementById('inputToggleBtn');
+    const inputLabel = document.getElementById('dynamicInputLabel');
+    const dynamicInput = document.getElementById('dynamicInput');
+    
+    isSharesMode = !isSharesMode;
+    
+    if (isSharesMode) {
+        // Switch to shares mode
+        toggleBtn.textContent = 'Switch to Value Input';
+        inputLabel.textContent = 'Number of Shares:';
+        dynamicInput.placeholder = 'e.g., 10.5';
+        dynamicInput.step = '0.000001';
+    } else {
+        // Switch to value mode
+        toggleBtn.textContent = 'Switch to Shares Input';
+        inputLabel.textContent = 'Total Value ($):';
+        dynamicInput.placeholder = 'e.g., 1000.00';
+        dynamicInput.step = '0.01';
+    }
+    
+    // Clear input and recalculate
+    dynamicInput.value = '';
+    calculateDynamicValue();
 }
 
 // Add asset to portfolio
@@ -985,17 +1006,17 @@ function addAssetToPortfolio() {
         const ticker = document.getElementById('stockTicker').value;
         const price = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
         
-        // Check which input method was used
-        const sharesMethodRadio = document.getElementById('sharesMethodRadio');
+        // Get value from dynamic input
+        const inputValue = parseFloat(document.getElementById('dynamicInput').value) || 0;
         let shares, value;
         
-        if (sharesMethodRadio && sharesMethodRadio.checked) {
+        if (isSharesMode) {
             // User entered shares
-            shares = parseFloat(document.getElementById('sharesOwned').value) || 0;
+            shares = inputValue;
             value = price * shares;
         } else {
             // User entered total value
-            value = parseFloat(document.getElementById('totalValueInput').value) || 0;
+            value = inputValue;
             shares = price > 0 ? value / price : 0;
         }
         
@@ -1017,17 +1038,31 @@ function addAssetToPortfolio() {
     document.getElementById('assetModal').style.display = 'none';
     document.getElementById('assetForm').reset();
     document.getElementById('currentPrice').textContent = '$0.00';
-    document.getElementById('calculatedValue').textContent = '$0.00';
-    document.getElementById('calculatedShares').textContent = '0';
+    document.getElementById('calculatedResult').textContent = '$0.00';
     
-    // Reset input method to shares
-    const sharesMethodRadio = document.getElementById('sharesMethodRadio');
-    if (sharesMethodRadio) {
-        sharesMethodRadio.checked = true;
-        toggleInputMethod();
+    // Reset input mode to shares
+    isSharesMode = true;
+    const toggleBtn = document.getElementById('inputToggleBtn');
+    const inputLabel = document.getElementById('dynamicInputLabel');
+    const dynamicInput = document.getElementById('dynamicInput');
+    
+    if (toggleBtn && inputLabel && dynamicInput) {
+        toggleBtn.textContent = 'Switch to Value Input';
+        inputLabel.textContent = 'Number of Shares:';
+        dynamicInput.placeholder = 'e.g., 10.5';
+        dynamicInput.step = '0.000001';
     }
     
     showNotification('Asset added successfully!');
+    
+    // Track asset addition for analytics
+    if (window.va) {
+        window.va('track', 'Asset Added', {
+            category: category,
+            type: asset.type,
+            ticker: asset.ticker || 'N/A'
+        });
+    }
 }
 
 // Current category for adding assets
@@ -1115,7 +1150,7 @@ async function fetchPrice() {
         
         if (price > 0) {
             currentPriceSpan.textContent = `$${price.toFixed(2)}`;
-            updateCalculatedValue();
+            calculateDynamicValue();
             showNotification(`Price fetched: $${price.toFixed(2)}`);
         } else {
             showNotification('Failed to fetch price. Please try again.', 'error');
@@ -1566,6 +1601,11 @@ async function signUp(email, password) {
     updateProfileButton(true);
     closeProfileModal();
     
+    // Track sign up for analytics
+    if (window.va) {
+        window.va('track', 'User Signup');
+    }
+    
     // Sync portfolio to cloud
     await syncPortfolio();
 }
@@ -1598,6 +1638,11 @@ async function signIn(email, password) {
     showNotification('Signed in successfully!', 'success');
     updateProfileButton(true);
     closeProfileModal();
+    
+    // Track sign in for analytics
+    if (window.va) {
+        window.va('track', 'User Login');
+    }
 }
 
 // Update profile button appearance
