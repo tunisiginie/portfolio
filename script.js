@@ -22,6 +22,7 @@ let lastUpdateTime = null;
 // Chart instance
 let portfolioChart;
 let currentChartType = 'line';
+let currentTimeframe = '1D'; // Track current timeframe
 
 // DOM elements
 const assetModal = document.getElementById('assetModal');
@@ -72,21 +73,10 @@ function initializeChart() {
         // Remove pie chart class if it exists
         document.querySelector('.graph-container').classList.remove('pie-chart-active');
         
-        // Create sample data for Coinbase-style line chart
-        const labels = [];
-        const data = [];
-        const now = new Date();
-        
-        // Generate 24 hours of data points
-        for (let i = 23; i >= 0; i--) {
-            const time = new Date(now.getTime() - (i * 60 * 60 * 1000));
-            labels.push(time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
-            
-            // Generate realistic price movement with proper rounding
-            const basePrice = 4000;
-            const variation = Math.sin(i * 0.3) * 200 + Math.random() * 100;
-            data.push(Math.round((basePrice + variation) * 100) / 100);
-        }
+        // Generate chart data based on timeframe and actual portfolio value
+        const chartData = generateChartData(currentTimeframe);
+        const labels = chartData.labels;
+        const data = chartData.data;
         
         portfolioChart = new Chart(ctx, {
             type: 'line',
@@ -122,7 +112,27 @@ function initializeChart() {
                         borderWidth: 1,
                         cornerRadius: 8,
                         displayColors: false,
+                        filter: function(tooltipItem) {
+                            // Only show tooltips for high and low points
+                            const data = tooltipItem.chart.data.datasets[0].data;
+                            const maxValue = Math.max(...data);
+                            const minValue = Math.min(...data);
+                            const currentValue = tooltipItem.parsed.y;
+                            return currentValue === maxValue || currentValue === minValue;
+                        },
                         callbacks: {
+                            title: function(context) {
+                                const data = context[0].chart.data.datasets[0].data;
+                                const maxValue = Math.max(...data);
+                                const minValue = Math.min(...data);
+                                const currentValue = context[0].parsed.y;
+                                if (currentValue === maxValue) {
+                                    return 'High';
+                                } else if (currentValue === minValue) {
+                                    return 'Low';
+                                }
+                                return '';
+                            },
                             label: function(context) {
                                 const value = context.parsed.y;
                                 return value.toLocaleString('en-US', {
@@ -356,24 +366,11 @@ function updateChart() {
     if (!portfolioChart) return;
     
     if (currentChartType === 'line') {
-        const totalValue = calculateTotalValue();
-        const labels = [];
-        const data = [];
-        const now = new Date();
+        // Generate new chart data based on current timeframe
+        const chartData = generateChartData(currentTimeframe);
         
-        // Generate 24 hours of data points based on current total
-        for (let i = 23; i >= 0; i--) {
-            const time = new Date(now.getTime() - (i * 60 * 60 * 1000));
-            labels.push(time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
-            
-            // Generate realistic price movement around current total with proper rounding
-            const variation = Math.sin(i * 0.3) * (totalValue * 0.05) + (Math.random() - 0.5) * (totalValue * 0.02);
-            const value = Math.max(0, totalValue + variation);
-            data.push(Math.round(value * 100) / 100);
-        }
-        
-        portfolioChart.data.labels = labels;
-        portfolioChart.data.datasets[0].data = data;
+        portfolioChart.data.labels = chartData.labels;
+        portfolioChart.data.datasets[0].data = chartData.data;
         portfolioChart.update('none');
     } else if (currentChartType === 'pie') {
         const chartData = getPieChartData();
@@ -403,6 +400,110 @@ function switchChartType(type) {
     
     // Reinitialize chart with new type
     initializeChart();
+}
+
+// Switch timeframe for line chart
+function switchTimeframe(timeframe) {
+    if (currentTimeframe === timeframe) return;
+    
+    currentTimeframe = timeframe;
+    
+    // Update button states
+    document.querySelectorAll('.timeframe-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Update chart if it's a line chart
+    if (currentChartType === 'line') {
+        updateChart();
+    }
+}
+
+// Generate chart data based on timeframe and portfolio value
+function generateChartData(timeframe) {
+    const labels = [];
+    const data = [];
+    const now = new Date();
+    const currentTotal = calculateTotalValue() || 4000; // Default to 4000 if no portfolio
+    
+    let periods, timeUnit, labelFormat;
+    
+    switch (timeframe) {
+        case '1H':
+            periods = 12; // 12 five-minute intervals
+            timeUnit = 5 * 60 * 1000; // 5 minutes
+            labelFormat = { hour: '2-digit', minute: '2-digit', hour12: false };
+            break;
+        case '1D':
+            periods = 24; // 24 hours
+            timeUnit = 60 * 60 * 1000; // 1 hour
+            labelFormat = { hour: '2-digit', minute: '2-digit', hour12: false };
+            break;
+        case '1W':
+            periods = 7; // 7 days
+            timeUnit = 24 * 60 * 60 * 1000; // 1 day
+            labelFormat = { weekday: 'short' };
+            break;
+        case '1M':
+            periods = 30; // 30 days
+            timeUnit = 24 * 60 * 60 * 1000; // 1 day
+            labelFormat = { month: 'short', day: 'numeric' };
+            break;
+        case '1Y':
+            periods = 12; // 12 months
+            timeUnit = 30 * 24 * 60 * 60 * 1000; // ~1 month
+            labelFormat = { month: 'short' };
+            break;
+        case 'ALL':
+            periods = 24; // 24 months (2 years)
+            timeUnit = 30 * 24 * 60 * 60 * 1000; // ~1 month
+            labelFormat = { year: '2-digit', month: 'short' };
+            break;
+        default:
+            periods = 24;
+            timeUnit = 60 * 60 * 1000;
+            labelFormat = { hour: '2-digit', minute: '2-digit', hour12: false };
+    }
+    
+    // Generate data points based on timeframe
+    for (let i = periods - 1; i >= 0; i--) {
+        const time = new Date(now.getTime() - (i * timeUnit));
+        labels.push(time.toLocaleTimeString('en-US', labelFormat) || time.toLocaleDateString('en-US', labelFormat));
+        
+        // Generate realistic price movement based on timeframe
+        const volatility = getVolatilityForTimeframe(timeframe);
+        const trendFactor = getTrendFactor(i, periods);
+        const randomFactor = (Math.random() - 0.5) * 2;
+        const variation = Math.sin(i * 0.3) * volatility * trendFactor + randomFactor * volatility * 0.5;
+        
+        const value = Math.max(0, currentTotal + variation);
+        data.push(Math.round(value * 100) / 100);
+    }
+    
+    return { labels, data };
+}
+
+// Get volatility based on timeframe (longer timeframes = more volatility)
+function getVolatilityForTimeframe(timeframe) {
+    const baseVolatility = calculateTotalValue() * 0.02; // 2% base volatility
+    
+    switch (timeframe) {
+        case '1H': return baseVolatility * 0.5;
+        case '1D': return baseVolatility;
+        case '1W': return baseVolatility * 2;
+        case '1M': return baseVolatility * 5;
+        case '1Y': return baseVolatility * 15;
+        case 'ALL': return baseVolatility * 25;
+        default: return baseVolatility;
+    }
+}
+
+// Get trend factor for more realistic price movements
+function getTrendFactor(index, totalPeriods) {
+    // Create a slight upward trend over time with some volatility
+    const progress = index / totalPeriods;
+    return 1 + (progress * 0.2) + Math.sin(progress * Math.PI * 4) * 0.1;
 }
 
 
