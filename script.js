@@ -1027,76 +1027,130 @@ function toggleInputMode() {
 
 // Add asset to portfolio
 function addAssetToPortfolio() {
-    const name = document.getElementById('assetName').value;
-    const tickerRadio = document.getElementById('tickerRadio');
-    const category = currentCategory;
-    
-    let asset = {
-        name: name,
-        value: 0,
-        dateAdded: new Date().toISOString()
-    };
-    
-    if (tickerRadio.checked) {
-        const ticker = document.getElementById('stockTicker').value;
-        const price = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
+    try {
+        const name = document.getElementById('assetName').value;
+        const tickerRadio = document.getElementById('tickerRadio');
+        const category = currentCategory;
         
-        // Get value from dynamic input
-        const inputValue = parseFloat(document.getElementById('dynamicInput').value) || 0;
-        let shares, value;
+        console.log('Adding asset:', { name, category, tickerRadio: tickerRadio?.checked });
         
-        if (isSharesMode) {
-            // User entered shares
-            shares = inputValue;
-            value = price * shares;
-        } else {
-            // User entered total value
-            value = inputValue;
-            shares = price > 0 ? value / price : 0;
+        // Validation
+        if (!name || !name.trim()) {
+            showNotification('Please enter an asset name', 'error');
+            return;
         }
         
-        asset.ticker = ticker;
-        asset.shares = shares;
-        asset.price = price;
-        asset.value = value;
-        asset.type = 'ticker';
-    } else {
-        asset.value = parseFloat(document.getElementById('assetValue').value);
-        asset.type = 'static';
-    }
-    
-    portfolio[category].push(asset);
-    savePortfolio();
-    updateDisplay();
-    
-    // Close modal and reset form
-    document.getElementById('assetModal').style.display = 'none';
-    document.getElementById('assetForm').reset();
-    document.getElementById('currentPrice').textContent = '$0.00';
-    document.getElementById('calculatedResult').textContent = '$0.00';
-    
-    // Reset input mode to shares
-    isSharesMode = true;
-    const toggleBtn = document.getElementById('inputToggleBtn');
-    const inputLabel = document.getElementById('dynamicInputLabel');
-    const dynamicInput = document.getElementById('dynamicInput');
-    
-    if (toggleBtn && inputLabel && dynamicInput) {
-        toggleBtn.textContent = 'Switch to Value Input';
-        inputLabel.textContent = 'Number of Shares:';
-        dynamicInput.placeholder = 'e.g., 10.5';
-        dynamicInput.step = '0.000001';
-    }
-    
-    showNotification('Asset added successfully!');
-    
-    // Track asset addition for analytics
-    if (window.va) {
-        window.va('track', 'Asset Added', {
-            category: category,
-            type: asset.type,
-            ticker: asset.ticker || 'N/A'
-        });
+        if (!category) {
+            showNotification('Invalid category', 'error');
+            return;
+        }
+        
+        let asset = {
+            name: name.trim(),
+            value: 0,
+            dateAdded: new Date().toISOString()
+        };
+        
+        if (tickerRadio && tickerRadio.checked) {
+            const ticker = document.getElementById('stockTicker').value;
+            const price = parseFloat(document.getElementById('currentPrice').textContent.replace('$', '').replace('Loading...', '0'));
+            const inputValue = parseFloat(document.getElementById('dynamicInput').value) || 0;
+            
+            console.log('Ticker mode:', { ticker, price, inputValue, isSharesMode });
+            
+            // Validation for ticker mode
+            if (!ticker || !ticker.trim()) {
+                showNotification('Please enter a ticker symbol', 'error');
+                return;
+            }
+            
+            if (price <= 0) {
+                showNotification('Please fetch a valid price first', 'error');
+                return;
+            }
+            
+            if (inputValue <= 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
+            }
+            
+            let shares, value;
+            
+            if (isSharesMode) {
+                // User entered shares
+                shares = inputValue;
+                value = price * shares;
+            } else {
+                // User entered total value
+                value = inputValue;
+                shares = price > 0 ? value / price : 0;
+            }
+            
+            asset.ticker = ticker.trim().toUpperCase();
+            asset.shares = shares;
+            asset.price = price;
+            asset.value = value;
+            asset.type = 'ticker';
+        } else {
+            // Static value mode
+            const assetValueInput = document.getElementById('assetValue');
+            const assetValue = parseFloat(assetValueInput?.value) || 0;
+            
+            console.log('Static mode:', { assetValue });
+            
+            if (assetValue <= 0) {
+                showNotification('Please enter a valid asset value', 'error');
+                return;
+            }
+            
+            asset.value = assetValue;
+            asset.type = 'static';
+        }
+        
+        console.log('Final asset:', asset);
+        
+        // Add to portfolio
+        if (!portfolio[category]) {
+            portfolio[category] = [];
+        }
+        
+        portfolio[category].push(asset);
+        savePortfolio();
+        updateDisplay();
+        
+        // Close modal and reset form
+        document.getElementById('assetModal').style.display = 'none';
+        document.getElementById('assetForm').reset();
+        document.getElementById('currentPrice').textContent = '$0.00';
+        document.getElementById('calculatedResult').textContent = '$0.00';
+        
+        // Reset input mode to shares
+        isSharesMode = true;
+        const toggleBtn = document.getElementById('inputToggleBtn');
+        const inputLabel = document.getElementById('dynamicInputLabel');
+        const dynamicInput = document.getElementById('dynamicInput');
+        
+        if (toggleBtn && inputLabel && dynamicInput) {
+            toggleBtn.textContent = 'Switch to Value Input';
+            inputLabel.textContent = 'Number of Shares:';
+            dynamicInput.placeholder = 'e.g., 10.5';
+            dynamicInput.step = '0.000001';
+        }
+        
+        showNotification('Asset added successfully!');
+        
+        // Track asset addition for analytics
+        if (window.va) {
+            window.va('track', 'Asset Added', {
+                category: category,
+                type: asset.type,
+                ticker: asset.ticker || 'N/A'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error adding asset:', error);
+        showNotification('Error adding asset. Please try again.', 'error');
     }
 }
 
