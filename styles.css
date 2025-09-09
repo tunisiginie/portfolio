@@ -459,38 +459,6 @@ body {
     color: #ff4444;
 }
 
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 12px;
-    padding: 0 16px 24px;
-}
-
-.action-btn {
-    flex: 1;
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.action-btn.transfer {
-    background: #1a1a1a;
-    color: #ffffff;
-}
-
-.action-btn.buy-sell {
-    background: #0052ff;
-    color: #ffffff;
-}
-
-.action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);
-}
 
 /* Bottom Navigation */
 .bottom-nav {
@@ -852,9 +820,6 @@ body {
     
 
     
-    .action-buttons {
-        flex-direction: column;
-    }
 }
 
 /* Animation for chart loading */
