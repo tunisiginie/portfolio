@@ -52,17 +52,43 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
-// Load portfolio from localStorage
+// Load portfolio from localStorage (user-specific)
 function loadPortfolio() {
-    const saved = localStorage.getItem('portfolio');
+    let portfolioKey = 'portfolio';
+    
+    // If user is logged in, use user-specific portfolio
+    if (currentUser && currentUser.email) {
+        portfolioKey = `portfolio_${currentUser.email}`;
+    }
+    
+    const saved = localStorage.getItem(portfolioKey);
     if (saved) {
         portfolio = JSON.parse(saved);
+    } else {
+        // Initialize empty portfolio for new users
+        portfolio = {
+            stocks: [],
+            roth: [],
+            checking: [],
+            savings: [],
+            crypto: [],
+            'real-estate': [],
+            vehicles: [],
+            other: []
+        };
     }
 }
 
-// Save portfolio to localStorage
+// Save portfolio to localStorage (user-specific)
 function savePortfolio() {
-    localStorage.setItem('portfolio', JSON.stringify(portfolio));
+    let portfolioKey = 'portfolio';
+    
+    // If user is logged in, use user-specific portfolio
+    if (currentUser && currentUser.email) {
+        portfolioKey = `portfolio_${currentUser.email}`;
+    }
+    
+    localStorage.setItem(portfolioKey, JSON.stringify(portfolio));
 }
 
 // Initialize the chart
@@ -77,6 +103,12 @@ function initializeChart() {
         const chartData = generateChartData(currentTimeframe);
         const labels = chartData.labels;
         const data = chartData.data;
+        
+        // If no data, show empty state
+        if (data.length === 0) {
+            showEmptyChartState();
+            return;
+        }
         
         portfolioChart = new Chart(ctx, {
             type: 'line',
@@ -112,26 +144,11 @@ function initializeChart() {
                         borderWidth: 1,
                         cornerRadius: 8,
                         displayColors: false,
-                        filter: function(tooltipItem) {
-                            // Only show tooltips for high and low points
-                            const data = tooltipItem.chart.data.datasets[0].data;
-                            const maxValue = Math.max(...data);
-                            const minValue = Math.min(...data);
-                            const currentValue = tooltipItem.parsed.y;
-                            return currentValue === maxValue || currentValue === minValue;
-                        },
+                        // Show tooltips for all points when hovering
+                        enabled: true,
                         callbacks: {
                             title: function(context) {
-                                const data = context[0].chart.data.datasets[0].data;
-                                const maxValue = Math.max(...data);
-                                const minValue = Math.min(...data);
-                                const currentValue = context[0].parsed.y;
-                                if (currentValue === maxValue) {
-                                    return 'High';
-                                } else if (currentValue === minValue) {
-                                    return 'Low';
-                                }
-                                return '';
+                                return context[0].label;
                             },
                             label: function(context) {
                                 const value = context.parsed.y;
@@ -425,7 +442,12 @@ function generateChartData(timeframe) {
     const labels = [];
     const data = [];
     const now = new Date();
-    const currentTotal = calculateTotalValue() || 4000; // Default to 4000 if no portfolio
+    const currentTotal = calculateTotalValue();
+    
+    // If no portfolio data, return empty chart data
+    if (currentTotal === 0) {
+        return { labels: [], data: [] };
+    }
     
     let periods, timeUnit, labelFormat;
     
@@ -504,6 +526,30 @@ function getTrendFactor(index, totalPeriods) {
     // Create a slight upward trend over time with some volatility
     const progress = index / totalPeriods;
     return 1 + (progress * 0.2) + Math.sin(progress * Math.PI * 4) * 0.1;
+}
+
+// Show empty state for new users
+function showEmptyChartState() {
+    const graphContainer = document.querySelector('.graph-container');
+    graphContainer.innerHTML = `
+        <div class="empty-chart-state">
+            <div class="empty-chart-icon">📊</div>
+            <h3>Start Building Your Portfolio</h3>
+            <p>Add your first asset to see your portfolio performance over time</p>
+            <button class="add-assets-btn" onclick="scrollToQuickAdd()">
+                <span class="btn-icon">➕</span>
+                <span class="btn-text">Add Your Assets</span>
+            </button>
+        </div>
+    `;
+}
+
+// Scroll to quick add section
+function scrollToQuickAdd() {
+    const quickAddSection = document.querySelector('.quick-add-section');
+    if (quickAddSection) {
+        quickAddSection.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 
@@ -839,6 +885,17 @@ function setupModals() {
     fetchPriceBtn.onclick = function() {
         fetchPrice();
     }
+    
+    // Setup input method radio buttons
+    const sharesMethodRadio = document.getElementById('sharesMethodRadio');
+    const totalValueMethodRadio = document.getElementById('totalValueMethodRadio');
+    
+    if (sharesMethodRadio) {
+        sharesMethodRadio.onchange = toggleInputMethod;
+    }
+    if (totalValueMethodRadio) {
+        totalValueMethodRadio.onchange = toggleInputMethod;
+    }
 }
 
 // Update required fields based on input type
@@ -859,12 +916,57 @@ function updateRequiredFields() {
     }
 }
 
-// Update calculated value
+// Update calculated value (legacy function for compatibility)
 function updateCalculatedValue() {
+    calculateFromShares();
+}
+
+// Calculate total value from shares
+function calculateFromShares() {
     const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
     const shares = parseFloat(document.getElementById('sharesOwned').value) || 0;
     const calculatedValue = currentPrice * shares;
-    document.getElementById('calculatedValue').textContent = `$${calculatedValue.toFixed(2)}`;
+    
+    document.getElementById('calculatedValue').textContent = `$${calculatedValue.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+    document.getElementById('calculatedShares').textContent = shares.toFixed(6);
+}
+
+// Calculate shares from total value
+function calculateFromTotalValue() {
+    const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
+    const totalValue = parseFloat(document.getElementById('totalValueInput').value) || 0;
+    const calculatedShares = currentPrice > 0 ? totalValue / currentPrice : 0;
+    
+    document.getElementById('calculatedValue').textContent = `$${totalValue.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+    document.getElementById('calculatedShares').textContent = calculatedShares.toFixed(6);
+}
+
+// Toggle input method
+function toggleInputMethod() {
+    const sharesMethodRadio = document.getElementById('sharesMethodRadio');
+    const totalValueMethodRadio = document.getElementById('totalValueMethodRadio');
+    const sharesInputGroup = document.getElementById('sharesInputGroup');
+    const totalValueInputGroup = document.getElementById('totalValueInputGroup');
+    
+    if (sharesMethodRadio.checked) {
+        sharesInputGroup.style.display = 'block';
+        totalValueInputGroup.style.display = 'none';
+        // Clear total value input
+        document.getElementById('totalValueInput').value = '';
+        calculateFromShares();
+    } else if (totalValueMethodRadio.checked) {
+        sharesInputGroup.style.display = 'none';
+        totalValueInputGroup.style.display = 'block';
+        // Clear shares input
+        document.getElementById('sharesOwned').value = '';
+        calculateFromTotalValue();
+    }
 }
 
 // Add asset to portfolio
@@ -881,13 +983,26 @@ function addAssetToPortfolio() {
     
     if (tickerRadio.checked) {
         const ticker = document.getElementById('stockTicker').value;
-        const shares = parseFloat(document.getElementById('sharesOwned').value);
         const price = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
+        
+        // Check which input method was used
+        const sharesMethodRadio = document.getElementById('sharesMethodRadio');
+        let shares, value;
+        
+        if (sharesMethodRadio && sharesMethodRadio.checked) {
+            // User entered shares
+            shares = parseFloat(document.getElementById('sharesOwned').value) || 0;
+            value = price * shares;
+        } else {
+            // User entered total value
+            value = parseFloat(document.getElementById('totalValueInput').value) || 0;
+            shares = price > 0 ? value / price : 0;
+        }
         
         asset.ticker = ticker;
         asset.shares = shares;
         asset.price = price;
-        asset.value = price * shares;
+        asset.value = value;
         asset.type = 'ticker';
     } else {
         asset.value = parseFloat(document.getElementById('assetValue').value);
@@ -903,6 +1018,14 @@ function addAssetToPortfolio() {
     document.getElementById('assetForm').reset();
     document.getElementById('currentPrice').textContent = '$0.00';
     document.getElementById('calculatedValue').textContent = '$0.00';
+    document.getElementById('calculatedShares').textContent = '0';
+    
+    // Reset input method to shares
+    const sharesMethodRadio = document.getElementById('sharesMethodRadio');
+    if (sharesMethodRadio) {
+        sharesMethodRadio.checked = true;
+        toggleInputMethod();
+    }
     
     showNotification('Asset added successfully!');
 }
@@ -921,7 +1044,7 @@ function addAsset(category) {
     const quantityLabel = document.getElementById('quantityLabel');
     
     // Show/hide input type selector based on category
-    if (category === 'stocks' || category === 'crypto') {
+    if (category === 'stocks' || category === 'crypto' || category === 'roth') {
         inputTypeSelector.style.display = 'block';
         
         if (category === 'stocks') {
@@ -930,6 +1053,13 @@ function addAsset(category) {
             tickerInputLabel.textContent = 'Stock Ticker:';
             quantityLabel.textContent = 'Number of Shares:';
             document.getElementById('stockTicker').placeholder = 'e.g., AAPL';
+            document.getElementById('sharesOwned').step = '0.01';
+        } else if (category === 'roth') {
+            modalTitle.textContent = 'Add Roth IRA Stock';
+            tickerLabel.textContent = 'Stock Ticker & Shares (Auto-update price)';
+            tickerInputLabel.textContent = 'Stock Ticker:';
+            quantityLabel.textContent = 'Number of Shares:';
+            document.getElementById('stockTicker').placeholder = 'e.g., VTSAX, SPY';
             document.getElementById('sharesOwned').step = '0.01';
         } else {
             modalTitle.textContent = 'Add Cryptocurrency';
@@ -979,6 +1109,7 @@ async function fetchPrice() {
         if (category === 'crypto') {
             price = await fetchCryptoPrice(ticker);
         } else {
+            // Handle stocks and roth (both use stock prices)
             price = await fetchStockPrice(ticker);
         }
         
@@ -1194,7 +1325,7 @@ async function updatePrices() {
         
         // Update all ticker-based assets
     for (const category in portfolio) {
-        if (category === 'stocks' || category === 'crypto') {
+        if (category === 'stocks' || category === 'crypto' || category === 'roth') {
             for (const asset of portfolio[category]) {
                 if (asset.type === 'ticker' && asset.ticker) {
                         promises.push(updateAssetPrice(category, asset));
@@ -1460,12 +1591,9 @@ async function signIn(email, password) {
     currentUser = { email, createdAt: user.createdAt };
     localStorage.setItem('portfolioUser', JSON.stringify(currentUser));
     
-    // Load user's portfolio
-    if (user.portfolio) {
-        portfolio = user.portfolio;
-        savePortfolio();
-        updateDisplay();
-    }
+    // Load user's specific portfolio
+    loadPortfolio();
+    updateDisplay();
     
     showNotification('Signed in successfully!', 'success');
     updateProfileButton(true);
@@ -1620,13 +1748,12 @@ function logout() {
         closeProfileModal();
         showNotification('Signed out successfully', 'success');
         
-        // Optionally clear portfolio data (uncomment if desired)
-        // portfolio = {
-        //     stocks: [], roth: [], checking: [], savings: [],
-        //     crypto: [], 'real-estate': [], vehicles: [], other: []
-        // };
-        // savePortfolio();
-        // updateDisplay();
+        // Clear portfolio data and load empty portfolio for anonymous user
+        portfolio = {
+            stocks: [], roth: [], checking: [], savings: [],
+            crypto: [], 'real-estate': [], vehicles: [], other: []
+        };
+        updateDisplay();
     }
 }
 

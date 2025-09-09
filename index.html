@@ -113,12 +113,6 @@
             </div>
         </div>
 
-        <!-- Content Categories -->
-        <div class="content-categories">
-            <button class="category-btn active">Watchlist</button>
-            <button class="category-btn">Trending</button>
-            <button class="category-btn">Top gainers</button>
-        </div>
 
         <!-- Cryptocurrency Listings -->
         <div class="crypto-listings" id="cryptoListings">
@@ -217,15 +211,44 @@
                         <input type="text" id="stockTicker" placeholder="e.g., AAPL" style="text-transform: uppercase;">
                     </div>
                     <div class="form-group">
-                        <label for="sharesOwned" id="quantityLabel">Quantity:</label>
-                        <input type="number" id="sharesOwned" step="0.000001" min="0" placeholder="e.g., 10.5">
-                    </div>
-                    <div class="form-group">
                         <label>Current Price: <span id="currentPrice">$0.00</span></label>
                         <button type="button" id="fetchPriceBtn" class="fetch-btn">Fetch Current Price</button>
                     </div>
+                    
+                    <!-- Input method selector -->
                     <div class="form-group">
-                        <label>Total Value: <span id="calculatedValue">$0.00</span></label>
+                        <label>Input Method:</label>
+                        <div class="input-method-selector">
+                            <label class="radio-option">
+                                <input type="radio" name="inputMethod" value="shares" id="sharesMethodRadio" checked>
+                                <span class="radio-custom"></span>
+                                Number of Shares
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="inputMethod" value="totalValue" id="totalValueMethodRadio">
+                                <span class="radio-custom"></span>
+                                Total Value
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Shares input -->
+                    <div class="form-group" id="sharesInputGroup">
+                        <label for="sharesOwned" id="quantityLabel">Number of Shares:</label>
+                        <input type="number" id="sharesOwned" step="0.000001" min="0" placeholder="e.g., 10.5" oninput="calculateFromShares()">
+                    </div>
+                    
+                    <!-- Total value input -->
+                    <div class="form-group" id="totalValueInputGroup" style="display: none;">
+                        <label for="totalValueInput">Total Value ($):</label>
+                        <input type="number" id="totalValueInput" step="0.01" min="0" placeholder="e.g., 1000.00" oninput="calculateFromTotalValue()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Calculated Total Value: <span id="calculatedValue">$0.00</span></label>
+                    </div>
+                    <div class="form-group">
+                        <label>Calculated Shares: <span id="calculatedShares">0</span></label>
                     </div>
                 </div>
                 

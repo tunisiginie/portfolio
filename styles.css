@@ -645,6 +645,25 @@ body {
     border-radius: 50%;
 }
 
+/* Input Method Selector */
+.input-method-selector {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.input-method-selector .radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.input-method-selector .radio-custom {
+    margin-right: 8px;
+}
+
 /* Fetch button styles */
 .fetch-btn {
     background: #0052ff;
@@ -917,6 +936,67 @@ body {
 
 .quick-add-btn.vehicles:hover {
     border-color: #ff6b35;
+}
+
+/* Empty Chart State */
+.empty-chart-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    height: 300px;
+}
+
+.empty-chart-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-chart-state h3 {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+.empty-chart-state p {
+    color: #666666;
+    font-size: 16px;
+    margin: 0 0 24px 0;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+.add-assets-btn {
+    background: #0052ff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.add-assets-btn:hover {
+    background: #0043cc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);
+}
+
+.add-assets-btn .btn-icon {
+    font-size: 18px;
+}
+
+.add-assets-btn .btn-text {
+    font-size: 16px;
 }
 
 /* Profile Button */
