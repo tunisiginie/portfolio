@@ -1,0 +1,799 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #000000;
+    color: #ffffff;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #000000;
+    border-bottom: 1px solid #1a1a1a;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-left .hamburger-menu {
+    font-size: 20px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.nav-center .toggle-switch {
+    display: flex;
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.toggle-option {
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-option.active {
+    background: #0052ff;
+}
+
+.toggle-icon {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.nav-right {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.nav-icon {
+    font-size: 18px;
+    color: #ffffff;
+    cursor: pointer;
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4444;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Portfolio Overview */
+.portfolio-overview {
+    padding: 24px 16px;
+    text-align: center;
+}
+
+.total-balance {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.daily-change {
+    font-size: 14px;
+    font-weight: 500;
+    color: #00d4aa;
+}
+
+.daily-change.negative {
+    color: #ff4444;
+}
+
+/* Price Graph Section */
+.price-graph-section {
+    padding: 0 16px 24px;
+}
+
+.graph-container {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    height: 500px;
+    position: relative;
+}
+
+.graph-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Pie chart specific styling for larger display */
+.graph-container.pie-chart-active {
+    height: 600px;
+}
+
+.graph-container.pie-chart-active canvas {
+    max-height: 500px !important;
+}
+
+
+
+.timeframe-selectors {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 8px 0 16px 0;
+}
+
+.timeframe-btn {
+    background: transparent;
+    border: none;
+    color: #666666;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeframe-btn.active {
+    background: #0052ff;
+    color: #ffffff;
+}
+
+.timeframe-btn:hover:not(.active) {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+/* Chart Type Toggle */
+.chart-type-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0 8px 0;
+}
+
+.chart-type-btn {
+    background: #1a1a1a;
+    border: 1px solid #333333;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-type-btn.active {
+    background: #0052ff;
+    border-color: #0052ff;
+    color: #ffffff;
+}
+
+.chart-type-btn:hover:not(.active) {
+    background: #2a2a2a;
+    border-color: #444444;
+}
+
+/* Asset Breakdown */
+.asset-breakdown {
+    padding: 0 16px 24px;
+}
+
+.asset-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.asset-item:hover {
+    background: #2a2a2a;
+}
+
+.asset-icon {
+    font-size: 24px;
+    margin-right: 16px;
+}
+
+.asset-info {
+    flex: 1;
+}
+
+.asset-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.asset-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.asset-arrow {
+    font-size: 18px;
+    color: #666666;
+}
+
+.asset-item.empty-state {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.asset-item.empty-state:hover {
+    background: #1a1a1a;
+    transform: none;
+}
+
+.asset-item.empty-state .asset-amount {
+    color: #666666;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* Content Categories */
+.content-categories {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 24px;
+}
+
+.category-btn {
+    background: #1a1a1a;
+    border: none;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.category-btn.active {
+    background: #ffffff;
+    color: #000000;
+}
+
+.category-btn:hover:not(.active) {
+    background: #2a2a2a;
+}
+
+/* Cryptocurrency Listings */
+.crypto-listings {
+    padding: 0 16px 24px;
+}
+
+.crypto-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.crypto-item:hover {
+    background: #2a2a2a;
+}
+
+.crypto-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.crypto-icon {
+    width: 40px;
+    height: 40px;
+    background: #0052ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #ffffff;
+    margin-right: 12px;
+    font-size: 16px;
+}
+
+.crypto-info {
+    flex: 1;
+}
+
+.crypto-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 2px;
+}
+
+.crypto-symbol {
+    font-size: 14px;
+    color: #666666;
+}
+
+.crypto-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.mini-chart {
+    font-size: 20px;
+    color: #00d4aa;
+}
+
+.crypto-right {
+    text-align: right;
+    flex: 1;
+}
+
+.crypto-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 2px;
+}
+
+.crypto-change {
+    font-size: 14px;
+    color: #666666;
+}
+
+.crypto-change.positive {
+    color: #00d4aa;
+}
+
+.crypto-change.negative {
+    color: #ff4444;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    padding: 0 16px 24px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn.transfer {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+.action-btn.buy-sell {
+    background: #0052ff;
+    color: #ffffff;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #000000;
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 20px;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-item.active {
+    color: #0052ff;
+}
+
+.nav-item:not(.active) {
+    color: #666666;
+}
+
+.nav-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.nav-label {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: #1a1a1a;
+    margin: 10% auto;
+    padding: 24px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    border: 1px solid #2a2a2a;
+}
+
+.close {
+    color: #666666;
+    float: right;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+}
+
+.close:hover {
+    color: #ffffff;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    background: #000000;
+    color: #ffffff;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #0052ff;
+}
+
+.form-group input::placeholder {
+    color: #666666;
+}
+
+.submit-btn {
+    background: #0052ff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: #0043cc;
+    transform: translateY(-1px);
+}
+
+/* Radio button styles */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.radio-label input[type="radio"] {
+    display: none;
+}
+
+.radio-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #2a2a2a;
+    border-radius: 50%;
+    margin-right: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.radio-label input[type="radio"]:checked + .radio-custom {
+    border-color: #0052ff;
+    background: #0052ff;
+}
+
+.radio-label input[type="radio"]:checked + .radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+}
+
+/* Fetch button styles */
+.fetch-btn {
+    background: #0052ff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+}
+
+.fetch-btn:hover {
+    background: #0043cc;
+    transform: translateY(-1px);
+}
+
+.fetch-btn:disabled {
+    background: #666666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Loading animation */
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #2a2a2a;
+    border-top: 2px solid #0052ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Category View Styles */
+.category-asset-item {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #2a2a2a;
+    transition: all 0.3s ease;
+}
+
+.category-asset-item:hover {
+    background: #2a2a2a;
+}
+
+.asset-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.asset-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.asset-item-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0052ff;
+}
+
+.asset-item-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 14px;
+    color: #666666;
+}
+
+.asset-item-detail {
+    display: flex;
+    justify-content: space-between;
+}
+
+.asset-item-detail strong {
+    color: #ffffff;
+}
+
+.delete-asset-btn {
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.delete-asset-btn:hover {
+    background: #cc3333;
+    transform: translateY(-1px);
+}
+
+.category-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #2a2a2a;
+}
+
+.back-btn {
+    background: #666666;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.back-btn:hover {
+    background: #555555;
+    transform: translateY(-1px);
+}
+
+#addToCategoryBtn {
+    flex: 2;
+    background: #0052ff;
+}
+
+#addToCategoryBtn:hover {
+    background: #0043cc;
+}
+
+.empty-category {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666666;
+    font-style: italic;
+}
+
+.empty-category h3 {
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding-bottom: 80px;
+    }
+    
+    .total-balance {
+        font-size: 28px;
+    }
+    
+    .graph-container {
+        height: 540px;
+    }
+    
+    .graph-container.pie-chart-active {
+        height: 640px;
+    }
+    
+
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Animation for chart loading */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.price-graph-section, .asset-breakdown, .crypto-listings {
+    animation: fadeIn 0.6s ease-out;
+} 

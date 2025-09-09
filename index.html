@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navigation Bar -->
+        <div class="top-nav">
+            <div class="nav-left">
+                <div class="hamburger-menu">☰</div>
+            </div>
+            <div class="nav-center">
+                <div class="toggle-switch">
+                    <div class="toggle-option active">
+                        <div class="toggle-icon">C</div>
+                    </div>
+                    <div class="toggle-option">
+                        <div class="toggle-icon">📊</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-right">
+                <div class="nav-icon">🔍</div>
+                <div class="nav-icon notification">
+                    🔔
+                    <span class="notification-badge">9+</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Overview -->
+        <div class="portfolio-overview">
+            <div class="total-balance">$<span id="totalAmount">0</span></div>
+            <div class="daily-change positive">
+                ↗ $<span id="dailyChange">0</span> (<span id="dailyChangePercent">0</span>%) 1D
+            </div>
+        </div>
+
+        <!-- Price Graph -->
+        <div class="price-graph-section">
+            <div class="graph-container">
+                <canvas id="portfolioChart"></canvas>
+            </div>
+            
+            <div class="chart-type-toggle">
+                <button class="chart-type-btn active" onclick="switchChartType('line')">Line Chart</button>
+                <button class="chart-type-btn" onclick="switchChartType('pie')">Pie Chart</button>
+            </div>
+
+            <div class="timeframe-selectors">
+                <button class="timeframe-btn">1H</button>
+                <button class="timeframe-btn active">1D</button>
+                <button class="timeframe-btn">1W</button>
+                <button class="timeframe-btn">1M</button>
+                <button class="timeframe-btn">1Y</button>
+                <button class="timeframe-btn">ALL</button>
+            </div>
+        </div>
+
+        <!-- Asset Breakdown -->
+        <div class="asset-breakdown" id="assetBreakdown">
+            <!-- Asset items will be dynamically generated here -->
+        </div>
+
+        <!-- Content Categories -->
+        <div class="content-categories">
+            <button class="category-btn active">Watchlist</button>
+            <button class="category-btn">Trending</button>
+            <button class="category-btn">Top gainers</button>
+        </div>
+
+        <!-- Cryptocurrency Listings -->
+        <div class="crypto-listings" id="cryptoListings">
+            <div class="crypto-item">
+                <div class="crypto-left">
+                    <div class="crypto-icon">X</div>
+                    <div class="crypto-info">
+                        <div class="crypto-name">XRP</div>
+                        <div class="crypto-symbol">XRP</div>
+                    </div>
+                </div>
+                <div class="crypto-center">
+                    <div class="mini-chart">📈</div>
+                </div>
+                <div class="crypto-right">
+                    <div class="crypto-price">$2.92</div>
+                    <div class="crypto-change positive">↗ 4.42%</div>
+                </div>
+            </div>
+            <div class="crypto-item">
+                <div class="crypto-left">
+                    <div class="crypto-icon">H</div>
+                    <div class="crypto-info">
+                        <div class="crypto-name">Hedera</div>
+                        <div class="crypto-symbol">HBAR</div>
+                    </div>
+                </div>
+                <div class="crypto-center">
+                    <div class="mini-chart">📈</div>
+                </div>
+                <div class="crypto-right">
+                    <div class="crypto-price">$0.25</div>
+                    <div class="crypto-change">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn transfer">Transfer</button>
+            <button class="action-btn buy-sell">Buy & sell</button>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">💼</div>
+                <div class="nav-label">Wallet</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📄</div>
+                <div class="nav-label">Activity</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">🎯</div>
+                <div class="nav-label">Discover</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">⏩</div>
+                <div class="nav-label">More</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding assets -->
+    <div id="assetModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Add Asset</h2>
+            <form id="assetForm">
+                <div class="form-group">
+                    <label for="assetName">Name:</label>
+                    <input type="text" id="assetName" required>
+                </div>
+                
+                <!-- Input type selector -->
+                <div class="form-group" id="inputTypeSelector" style="display: none;">
+                    <label>Input Type:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="inputType" value="ticker" id="tickerRadio">
+                            <span class="radio-custom"></span>
+                            <span id="tickerLabel">Ticker & Shares (Auto-update price)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="inputType" value="static" id="staticRadio" checked>
+                            <span class="radio-custom"></span>
+                            Static Value
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Ticker inputs -->
+                <div id="tickerInputs" style="display: none;">
+                    <div class="form-group">
+                        <label for="stockTicker" id="tickerInputLabel">Ticker:</label>
+                        <input type="text" id="stockTicker" placeholder="e.g., AAPL" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label for="sharesOwned" id="quantityLabel">Quantity:</label>
+                        <input type="number" id="sharesOwned" step="0.000001" min="0" placeholder="e.g., 10.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Price: <span id="currentPrice">$0.00</span></label>
+                        <button type="button" id="fetchPriceBtn" class="fetch-btn">Fetch Current Price</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Value: <span id="calculatedValue">$0.00</span></label>
+                    </div>
+                </div>
+                
+                <!-- Static value input -->
+                <div id="staticInput">
+                    <div class="form-group">
+                        <label for="assetValue">Value ($):</label>
+                        <input type="number" id="assetValue" step="0.01" min="0" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Add Asset</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for viewing category assets -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCategoryModal()">&times;</span>
+            <h2 id="categoryModalTitle">Category Assets</h2>
+            <div id="categoryAssetsList"></div>
+            <div class="category-actions">
+                <button class="add-btn" id="addToCategoryBtn">+ Add Asset</button>
+                <button class="back-btn" onclick="closeCategoryModal()">Back to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

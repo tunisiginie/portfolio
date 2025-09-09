@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XRP Price Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+        .result {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 XRP Price Test</h1>
+        <p>Testing the crypto price fetching functionality for XRP...</p>
+        
+        <button onclick="testXRPPrice()">Fetch XRP Price</button>
+        <button onclick="testXRPWithAmount()">Test XRP with 1000 XRP</button>
+        
+        <div id="result" class="result" style="display: none;">
+            <h3>Results:</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchXRPPrice() {
+            try {
+                // Try CoinGecko API first
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd');
+                
+                if (!response.ok) {
+                    throw new Error('CoinGecko API failed');
+                }
+                
+                const data = await response.json();
+                
+                if (data.ripple && data.ripple.usd) {
+                    return data.ripple.usd;
+                } else {
+                    throw new Error('No XRP data from CoinGecko');
+                }
+            } catch (error) {
+                console.log('CoinGecko failed, trying Coinbase...');
+                
+                // Fallback to Coinbase API
+                const altResponse = await fetch('https://api.coinbase.com/v2/prices/XRP-USD/spot');
+                
+                if (!altResponse.ok) {
+                    throw new Error('Both APIs failed');
+                }
+                
+                const altData = await altResponse.json();
+                return parseFloat(altData.data.amount);
+            }
+        }
+
+        async function testXRPPrice() {
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultDiv.style.display = 'block';
+            resultContent.innerHTML = '<span class="loading"></span>Fetching XRP price...';
+            
+            try {
+                const price = await fetchXRPPrice();
+                resultContent.innerHTML = `
+                    <h4>✅ XRP Price Fetched Successfully!</h4>
+                    <p><strong>Current XRP Price:</strong> $${price.toFixed(4)}</p>
+                    <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                    <p>🎉 The crypto price fetching is working perfectly!</p>
+                `;
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <h4>❌ Error Fetching XRP Price</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>This might be due to network issues or API rate limits.</p>
+                `;
+            }
+        }
+
+        async function testXRPWithAmount() {
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultDiv.style.display = 'block';
+            resultContent.innerHTML = '<span class="loading"></span>Calculating XRP portfolio value...';
+            
+            try {
+                const price = await fetchXRPPrice();
+                const amount = 1000; // 1000 XRP
+                const totalValue = amount * price;
+                
+                resultContent.innerHTML = `
+                    <h4>💰 XRP Portfolio Calculation</h4>
+                    <p><strong>XRP Amount:</strong> ${amount.toLocaleString()} XRP</p>
+                    <p><strong>Current Price:</strong> $${price.toFixed(4)}</p>
+                    <p><strong>Total Value:</strong> $${totalValue.toLocaleString()}</p>
+                    <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                    <p>🎯 Ready to add to your portfolio dashboard!</p>
+                `;
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <h4>❌ Error Calculating XRP Value</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            setTimeout(testXRPPrice, 1000);
+        };
+    </script>
+</body>
+</html> 
