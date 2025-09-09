@@ -82,10 +82,10 @@ function initializeChart() {
             const time = new Date(now.getTime() - (i * 60 * 60 * 1000));
             labels.push(time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
             
-            // Generate realistic price movement
+            // Generate realistic price movement with proper rounding
             const basePrice = 4000;
             const variation = Math.sin(i * 0.3) * 200 + Math.random() * 100;
-            data.push(basePrice + variation);
+            data.push(Math.round((basePrice + variation) * 100) / 100);
         }
         
         portfolioChart = new Chart(ctx, {
@@ -124,10 +124,13 @@ function initializeChart() {
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return `$${context.parsed.y.toLocaleString('en-US', {
+                                const value = context.parsed.y;
+                                return value.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD',
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2
-                                })}`;
+                                });
                             }
                         }
                     }
@@ -214,8 +217,13 @@ function initializeChart() {
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
                             
-                            // Format total value using Zillow-style formatting
-                            const displayValue = formatZillowPrice(totalValue);
+                            // Format total value with proper currency formatting
+                            const displayValue = totalValue.toLocaleString('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
                             
                             // Draw total value
                             ctx.font = 'bold 24px Inter, sans-serif';
@@ -242,7 +250,12 @@ function initializeChart() {
                             family: 'Inter, sans-serif'
                         },
                         formatter: function(value, context) {
-                            return formatZillowPrice(value);
+                            return value.toLocaleString('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
                         },
                         anchor: 'center',
                         align: 'center',
@@ -353,9 +366,10 @@ function updateChart() {
             const time = new Date(now.getTime() - (i * 60 * 60 * 1000));
             labels.push(time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
             
-            // Generate realistic price movement around current total
+            // Generate realistic price movement around current total with proper rounding
             const variation = Math.sin(i * 0.3) * (totalValue * 0.05) + (Math.random() - 0.5) * (totalValue * 0.02);
-            data.push(Math.max(0, totalValue + variation));
+            const value = Math.max(0, totalValue + variation);
+            data.push(Math.round(value * 100) / 100);
         }
         
         portfolioChart.data.labels = labels;
