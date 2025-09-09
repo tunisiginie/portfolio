@@ -91,7 +91,18 @@ body {
 /* Portfolio Overview */
 .portfolio-overview {
     padding: 24px 16px;
-    text-align: center;
+}
+
+.portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.portfolio-info {
+    text-align: left;
+    flex: 1;
 }
 
 .total-balance {
@@ -105,6 +116,70 @@ body {
     font-size: 14px;
     font-weight: 500;
     color: #00d4aa;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.daily-change.positive {
+    color: #00d4aa;
+}
+
+.daily-change.negative {
+    color: #ff4444;
+}
+
+.portfolio-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.refresh-btn {
+    background: #1a1a1a;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.refresh-btn:hover {
+    background: #333333;
+    border-color: #00d4aa;
+}
+
+.refresh-btn:active {
+    transform: scale(0.95);
+}
+
+.refresh-btn.refreshing {
+    background: #00d4aa;
+    border-color: #00d4aa;
+    color: #000000;
+}
+
+.refresh-btn.refreshing .refresh-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.refresh-icon {
+    font-size: 16px;
+}
+
+.refresh-text {
+    font-size: 12px;
 }
 
 .daily-change.negative {
@@ -796,4 +871,84 @@ body {
 
 .price-graph-section, .asset-breakdown, .crypto-listings {
     animation: fadeIn 0.6s ease-out;
+}
+
+/* Quick Add Assets Section */
+.quick-add-section {
+    padding: 20px 16px;
+    margin-bottom: 20px;
+}
+
+.quick-add-section h3 {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.quick-add-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.quick-add-btn {
+    background: #1a1a1a;
+    border: 1px solid #333333;
+    border-radius: 12px;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 80px;
+}
+
+.quick-add-btn:hover {
+    background: #333333;
+    border-color: #00d4aa;
+    transform: translateY(-2px);
+}
+
+.quick-add-btn:active {
+    transform: translateY(0);
+}
+
+.quick-add-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.quick-add-text {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.quick-add-btn.stocks:hover {
+    border-color: #0052ff;
+}
+
+.quick-add-btn.crypto:hover {
+    border-color: #f7931a;
+}
+
+.quick-add-btn.cash:hover {
+    border-color: #00d4aa;
+}
+
+.quick-add-btn.roth:hover {
+    border-color: #00d4aa;
+}
+
+.quick-add-btn.real-estate:hover {
+    border-color: #ff6b35;
+}
+
+.quick-add-btn.vehicles:hover {
+    border-color: #ff6b35;
 } 

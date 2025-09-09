@@ -37,9 +37,19 @@
 
         <!-- Portfolio Overview -->
         <div class="portfolio-overview">
-            <div class="total-balance">$<span id="totalAmount">0</span></div>
-            <div class="daily-change positive">
-                ↗ $<span id="dailyChange">0</span> (<span id="dailyChangePercent">0</span>%) 1D
+            <div class="portfolio-header">
+                <div class="portfolio-info">
+                    <div class="total-balance">$<span id="totalAmount">0</span></div>
+                    <div class="daily-change positive">
+                        ↗ $<span id="dailyChange">0</span> (<span id="dailyChangePercent">0</span>%) 1D
+                    </div>
+                </div>
+                <div class="portfolio-controls">
+                    <button class="refresh-btn" id="manualRefreshBtn" onclick="manualRefresh()">
+                        <span class="refresh-icon">🔄</span>
+                        <span class="refresh-text">Refresh</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -67,6 +77,37 @@
         <!-- Asset Breakdown -->
         <div class="asset-breakdown" id="assetBreakdown">
             <!-- Asset items will be dynamically generated here -->
+        </div>
+
+        <!-- Quick Add Assets Section -->
+        <div class="quick-add-section">
+            <h3>Quick Add Assets</h3>
+            <div class="quick-add-grid">
+                <button class="quick-add-btn stocks" onclick="addAsset('stocks')">
+                    <div class="quick-add-icon">📈</div>
+                    <div class="quick-add-text">Add Stock</div>
+                </button>
+                <button class="quick-add-btn crypto" onclick="addAsset('crypto')">
+                    <div class="quick-add-icon">₿</div>
+                    <div class="quick-add-text">Add Crypto</div>
+                </button>
+                <button class="quick-add-btn cash" onclick="addAsset('checking')">
+                    <div class="quick-add-icon">💰</div>
+                    <div class="quick-add-text">Add Cash</div>
+                </button>
+                <button class="quick-add-btn roth" onclick="addAsset('roth')">
+                    <div class="quick-add-icon">🏦</div>
+                    <div class="quick-add-text">Add Roth IRA</div>
+                </button>
+                <button class="quick-add-btn real-estate" onclick="addAsset('real-estate')">
+                    <div class="quick-add-icon">🏠</div>
+                    <div class="quick-add-text">Add Real Estate</div>
+                </button>
+                <button class="quick-add-btn vehicles" onclick="addAsset('vehicles')">
+                    <div class="quick-add-icon">🚗</div>
+                    <div class="quick-add-text">Add Vehicle</div>
+                </button>
+            </div>
         </div>
 
         <!-- Content Categories -->

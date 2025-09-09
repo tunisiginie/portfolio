@@ -1127,6 +1127,31 @@ function updateLastUpdateTime() {
 // Update the last update time every 30 seconds
 setInterval(updateLastUpdateTime, 30000);
 
+// Manual refresh function
+async function manualRefresh() {
+    const refreshBtn = document.getElementById('manualRefreshBtn');
+    if (!refreshBtn || isUpdatingPrices) return;
+    
+    // Add refreshing state
+    refreshBtn.classList.add('refreshing');
+    refreshBtn.disabled = true;
+    
+    try {
+        showNotification('Refreshing prices...', 'info');
+        await updatePrices();
+        showNotification('Prices updated successfully!', 'success');
+    } catch (error) {
+        console.error('Manual refresh error:', error);
+        showNotification('Failed to refresh prices', 'error');
+    } finally {
+        // Remove refreshing state
+        setTimeout(() => {
+            refreshBtn.classList.remove('refreshing');
+            refreshBtn.disabled = false;
+        }, 1000);
+    }
+}
+
 // Enhanced asset price update with change tracking
 async function updateAssetPrice(category, asset) {
     if (!asset.ticker) return;
@@ -1325,34 +1350,55 @@ function closeCategoryModal() {
     document.getElementById('categoryModal').style.display = 'none';
 }
 
-// Show notification
+// Enhanced notification system
 function showNotification(message, type = 'success') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
+    
+    // Set background color based on type
+    let backgroundColor;
+    switch (type) {
+        case 'error':
+            backgroundColor = '#ff4444';
+            break;
+        case 'info':
+            backgroundColor = '#0052ff';
+            break;
+        case 'warning':
+            backgroundColor = '#ff9500';
+            break;
+        default:
+            backgroundColor = '#00d4aa';
+    }
+    
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'error' ? '#ff4444' : '#00d4aa'};
+        background: ${backgroundColor};
         color: white;
         padding: 12px 20px;
         border-radius: 8px;
         font-weight: 500;
         z-index: 10000;
         animation: slideIn 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     `;
     
     document.body.appendChild(notification);
     
-    // Remove after 3 seconds
+    // Remove after 3 seconds (or 2 seconds for info messages)
+    const duration = type === 'info' ? 2000 : 3000;
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-out';
         setTimeout(() => {
-            document.body.removeChild(notification);
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
         }, 300);
-    }, 3000);
+    }, duration);
 }
 
 // Add CSS animations for notifications
