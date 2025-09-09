@@ -166,7 +166,7 @@ function initializeChart() {
                     x: {
                         display: true,
                         grid: {
-                            display: false
+                        display: false
                         },
                         ticks: {
                             color: '#666666',
@@ -481,43 +481,61 @@ function generateChartData(timeframe) {
         case '1H':
             periods = 12; // 12 five-minute intervals
             timeUnit = 5 * 60 * 1000; // 5 minutes
-            labelFormat = { hour: '2-digit', minute: '2-digit', hour12: false };
             break;
         case '1D':
             periods = 24; // 24 hours
             timeUnit = 60 * 60 * 1000; // 1 hour
-            labelFormat = { hour: '2-digit', minute: '2-digit', hour12: false };
             break;
         case '1W':
             periods = 7; // 7 days
             timeUnit = 24 * 60 * 60 * 1000; // 1 day
-            labelFormat = { weekday: 'short' };
             break;
         case '1M':
             periods = 30; // 30 days
             timeUnit = 24 * 60 * 60 * 1000; // 1 day
-            labelFormat = { month: 'short', day: 'numeric' };
             break;
         case '1Y':
             periods = 12; // 12 months
             timeUnit = 30 * 24 * 60 * 60 * 1000; // ~1 month
-            labelFormat = { month: 'short' };
             break;
         case 'ALL':
             periods = 24; // 24 months (2 years)
             timeUnit = 30 * 24 * 60 * 60 * 1000; // ~1 month
-            labelFormat = { year: '2-digit', month: 'short' };
             break;
         default:
             periods = 24;
             timeUnit = 60 * 60 * 1000;
-            labelFormat = { hour: '2-digit', minute: '2-digit', hour12: false };
     }
     
     // Generate data points based on timeframe
     for (let i = periods - 1; i >= 0; i--) {
         const time = new Date(now.getTime() - (i * timeUnit));
-        labels.push(time.toLocaleTimeString('en-US', labelFormat) || time.toLocaleDateString('en-US', labelFormat));
+        let label;
+        
+        switch (timeframe) {
+            case '1H':
+                label = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                break;
+            case '1D':
+                label = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                break;
+            case '1W':
+                label = `${time.getMonth() + 1}/${time.getDate()}`;
+                break;
+            case '1M':
+                label = `${time.getMonth() + 1}/${time.getDate()}/${time.getFullYear().toString().slice(-2)}`;
+                break;
+            case '1Y':
+                label = time.toLocaleDateString('en-US', { month: 'short' });
+                break;
+            case 'ALL':
+                label = `${time.toLocaleDateString('en-US', { month: 'short' })} '${time.getFullYear().toString().slice(-2)}`;
+                break;
+            default:
+                label = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+        
+        labels.push(label);
         
         // Generate realistic price movement based on timeframe
         const volatility = getVolatilityForTimeframe(timeframe);
@@ -895,12 +913,30 @@ function setupModals() {
         updateRequiredFields();
     }
     
-    // Setup ticker input
+    // Setup ticker input with auto-fetch
     const stockTicker = document.getElementById('stockTicker');
     const fetchPriceBtn = document.getElementById('fetchPriceBtn');
+    let fetchTimeout;
     
     stockTicker.oninput = function() {
         this.value = this.value.toUpperCase();
+        
+        // Clear previous timeout
+        if (fetchTimeout) {
+            clearTimeout(fetchTimeout);
+        }
+        
+        // Auto-fetch price after user stops typing for 1.5 seconds
+        const ticker = this.value.trim();
+        if (ticker.length >= 2) { // Only fetch for tickers with 2+ characters
+            fetchTimeout = setTimeout(() => {
+                fetchPrice(true); // Pass true for auto-fetch
+            }, 1500);
+        } else {
+            // Clear price display for short inputs
+            document.getElementById('currentPrice').textContent = '$0.00';
+            document.getElementById('calculatedResult').textContent = '$0.00';
+        }
     }
     
     fetchPriceBtn.onclick = function() {
@@ -1131,20 +1167,28 @@ function addAsset(category) {
     modal.style.display = 'block';
 }
 
-// Fetch price for ticker
-async function fetchPrice() {
+// Fetch price for ticker (supports both manual and auto-fetch)
+async function fetchPrice(isAutoFetch = false) {
     const ticker = document.getElementById('stockTicker').value.toUpperCase();
     const category = currentCategory;
     const fetchBtn = document.getElementById('fetchPriceBtn');
     const currentPriceSpan = document.getElementById('currentPrice');
     
     if (!ticker) {
+        if (!isAutoFetch) {
         showNotification('Please enter a ticker symbol', 'error');
+        }
         return;
     }
     
+    // Only show loading state for manual fetches
+    if (!isAutoFetch) {
     fetchBtn.disabled = true;
     fetchBtn.innerHTML = '<span class="loading"></span>Fetching...';
+    } else {
+        // Show subtle loading indicator for auto-fetch
+        currentPriceSpan.textContent = 'Loading...';
+    }
     
     try {
         let price = 0;
@@ -1159,16 +1203,26 @@ async function fetchPrice() {
         if (price > 0) {
             currentPriceSpan.textContent = `$${price.toFixed(2)}`;
             calculateDynamicValue();
+            if (!isAutoFetch) {
             showNotification(`Price fetched: $${price.toFixed(2)}`);
+            }
         } else {
+            currentPriceSpan.textContent = '$0.00';
+            if (!isAutoFetch) {
             showNotification('Failed to fetch price. Please try again.', 'error');
+            }
         }
     } catch (error) {
         console.error('Error fetching price:', error);
+        currentPriceSpan.textContent = '$0.00';
+        if (!isAutoFetch) {
         showNotification('Error fetching price. Please try again.', 'error');
+        }
     } finally {
+        if (!isAutoFetch) {
         fetchBtn.disabled = false;
         fetchBtn.textContent = 'Fetch Current Price';
+        }
     }
 }
 
