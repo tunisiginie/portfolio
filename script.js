@@ -897,7 +897,6 @@ function setupModals() {
     
     // Setup ticker input
     const stockTicker = document.getElementById('stockTicker');
-    const sharesOwned = document.getElementById('sharesOwned');
     const fetchPriceBtn = document.getElementById('fetchPriceBtn');
     
     stockTicker.oninput = function() {
@@ -921,16 +920,16 @@ function setupModals() {
 function updateRequiredFields() {
     const tickerRadio = document.getElementById('tickerRadio');
     const stockTicker = document.getElementById('stockTicker');
-    const sharesOwned = document.getElementById('sharesOwned');
+    const dynamicInput = document.getElementById('dynamicInput');
     const assetValue = document.getElementById('assetValue');
     
     if (tickerRadio.checked) {
         stockTicker.required = true;
-        sharesOwned.required = true;
+        dynamicInput.required = true;
         assetValue.required = false;
     } else {
         stockTicker.required = false;
-        sharesOwned.required = false;
+        dynamicInput.required = false;
         assetValue.required = true;
     }
 }
@@ -1074,9 +1073,9 @@ function addAsset(category) {
     const modal = document.getElementById('assetModal');
     const modalTitle = document.getElementById('modalTitle');
     const inputTypeSelector = document.getElementById('inputTypeSelector');
-    const tickerLabel = document.getElementById('tickerLabel');
     const tickerInputLabel = document.getElementById('tickerInputLabel');
-    const quantityLabel = document.getElementById('quantityLabel');
+    const dynamicInputLabel = document.getElementById('dynamicInputLabel');
+    const dynamicInput = document.getElementById('dynamicInput');
     
     // Show/hide input type selector based on category
     if (category === 'stocks' || category === 'crypto' || category === 'roth') {
@@ -1084,25 +1083,34 @@ function addAsset(category) {
         
         if (category === 'stocks') {
             modalTitle.textContent = 'Add Stock';
-            tickerLabel.textContent = 'Stock Ticker & Shares (Auto-update price)';
             tickerInputLabel.textContent = 'Stock Ticker:';
-            quantityLabel.textContent = 'Number of Shares:';
             document.getElementById('stockTicker').placeholder = 'e.g., AAPL';
-            document.getElementById('sharesOwned').step = '0.01';
+            // Reset to shares mode for stocks
+            isSharesMode = true;
+            dynamicInputLabel.textContent = 'Number of Shares:';
+            dynamicInput.placeholder = 'e.g., 10.5';
+            dynamicInput.step = '0.01';
+            document.getElementById('inputToggleBtn').textContent = 'Switch to Value Input';
         } else if (category === 'roth') {
             modalTitle.textContent = 'Add Roth IRA Stock';
-            tickerLabel.textContent = 'Stock Ticker & Shares (Auto-update price)';
             tickerInputLabel.textContent = 'Stock Ticker:';
-            quantityLabel.textContent = 'Number of Shares:';
             document.getElementById('stockTicker').placeholder = 'e.g., VTSAX, SPY';
-            document.getElementById('sharesOwned').step = '0.01';
+            // Reset to shares mode for roth
+            isSharesMode = true;
+            dynamicInputLabel.textContent = 'Number of Shares:';
+            dynamicInput.placeholder = 'e.g., 10.5';
+            dynamicInput.step = '0.01';
+            document.getElementById('inputToggleBtn').textContent = 'Switch to Value Input';
         } else {
             modalTitle.textContent = 'Add Cryptocurrency';
-            tickerLabel.textContent = 'Crypto Ticker & Amount (Auto-update price)';
             tickerInputLabel.textContent = 'Crypto Ticker:';
-            quantityLabel.textContent = 'Amount:';
             document.getElementById('stockTicker').placeholder = 'e.g., BTC';
-            document.getElementById('sharesOwned').step = '0.000001';
+            // Reset to shares mode for crypto (amount)
+            isSharesMode = true;
+            dynamicInputLabel.textContent = 'Amount:';
+            dynamicInput.placeholder = 'e.g., 0.1';
+            dynamicInput.step = '0.000001';
+            document.getElementById('inputToggleBtn').textContent = 'Switch to Value Input';
         }
     } else {
         inputTypeSelector.style.display = 'none';
