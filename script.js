@@ -1248,37 +1248,51 @@ async function fetchStockPrice(ticker) {
         console.log('[PF] Ticker:', tickerUpper, 'isCrypto:', isCrypto, 'cryptoList includes:', cryptoList.includes(tickerUpper));
         
         if (isCrypto) {
-            // Method 1: CoinGecko API (primary source for crypto)
+            // Method 1: CoinMarketCap API (primary source for crypto)
             try {
-                const cryptoMapping = {
-                    'BTC': 'bitcoin', 'ETH': 'ethereum', 'ADA': 'cardano', 'DOT': 'polkadot',
-                    'LINK': 'chainlink', 'UNI': 'uniswap', 'AAVE': 'aave', 'SOL': 'solana',
-                    'MATIC': 'matic-network', 'AVAX': 'avalanche-2', 'ATOM': 'cosmos',
-                    'NEAR': 'near', 'FTM': 'fantom', 'ALGO': 'algorand', 'XTZ': 'tezos',
-                    'LTC': 'litecoin', 'BCH': 'bitcoin-cash', 'XRP': 'ripple',
-                    'DOGE': 'dogecoin', 'SHIB': 'shiba-inu', 'USDT': 'tether',
-                    'USDC': 'usd-coin', 'BNB': 'binancecoin', 'TRX': 'tron',
-                    'LUNC': 'terra-luna', 'APT': 'aptos', 'ARB': 'arbitrum',
-                    'OP': 'optimism', 'SUI': 'sui', 'TIA': 'celestia',
-                    'INJ': 'injective-protocol', 'SEI': 'sei-network',
-                    'WLD': 'worldcoin-wld', 'PENDLE': 'pendle', 'JUP': 'jupiter-exchange-solana',
-                    'PYTH': 'pyth-network', 'BONK': 'bonk', 'PEPE': 'pepe',
-                    'FLOKI': 'floki', 'BOME': 'book-of-meme'
-                };
+                // Use CoinMarketCap's public API endpoint
+                const response = await fetch(`https://api.coinmarketcap.com/data-api/v3/cryptocurrency/listing?start=1&limit=100&sortBy=market_cap&sortType=desc&convert=USD&cryptoType=all&tagType=all&audited=false&aux=price,market_cap,volume_24h,cmc_rank`);
                 
-                const cryptoId = cryptoMapping[tickerUpper] || ticker.toLowerCase();
-                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd`);
-                const data = await response.json();
-                
-                if (data[cryptoId] && data[cryptoId].usd) {
-                    price = data[cryptoId].usd;
-                    console.log('[PF] CoinGecko price fetched for', tickerUpper, ':', price);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Search for the ticker in the results
+                    if (data.data && data.data.cryptoCurrencyList) {
+                        const crypto = data.data.cryptoCurrencyList.find(c => 
+                            c.symbol.toUpperCase() === tickerUpper
+                        );
+                        
+                        if (crypto && crypto.quotes && crypto.quotes[0] && crypto.quotes[0].price) {
+                            price = crypto.quotes[0].price;
+                            console.log('[PF] CoinMarketCap price fetched for', tickerUpper, ':', price);
+                        } else {
+                            console.log('[PF] Crypto not found in CoinMarketCap results:', tickerUpper);
+                        }
+                    }
                 } else {
-                    console.log('[PF] No price data found for', tickerUpper, 'with ID:', cryptoId);
-                    console.log('[PF] CoinGecko response:', data);
+                    console.log('[PF] CoinMarketCap API failed with status:', response.status);
                 }
             } catch (error) {
-                console.log('[PF] CoinGecko failed:', error.message);
+                console.log('[PF] CoinMarketCap failed:', error.message);
+            }
+            
+            // Method 2: Alternative CoinMarketCap endpoint
+            if (!price) {
+                try {
+                    const response = await fetch(`https://coinmarketcap.com/currencies/${ticker.toLowerCase()}/`);
+                    
+                    if (response.ok) {
+                        const html = await response.text();
+                        // Parse price from CoinMarketCap HTML
+                        const priceMatch = html.match(/"price":"([0-9.]+)"/);
+                        if (priceMatch) {
+                            price = parseFloat(priceMatch[1]);
+                            console.log('[PF] CoinMarketCap HTML price fetched for', tickerUpper, ':', price);
+                        }
+                    }
+                } catch (error) {
+                    console.log('[PF] CoinMarketCap HTML failed:', error.message);
+                }
             }
         } else {
             console.log('[PF] Treating', tickerUpper, 'as a stock ticker');
@@ -1398,7 +1412,7 @@ async function fetchStockPrice(ticker) {
         // Determine the actual source used
         let sourceUsed = 'Unknown';
         if (isCrypto) {
-            sourceUsed = 'CoinGecko';
+            sourceUsed = 'CoinMarketCap';
         } else {
             sourceUsed = 'Google Finance';
         }
