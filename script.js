@@ -1241,64 +1241,41 @@ async function fetchStockPrice(ticker) {
         let price = null;
         const tickerUpper = ticker.toUpperCase();
         
-        // Check if it's a cryptocurrency
-        const isCrypto = ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL', 'MATIC', 'AVAX', 'ATOM', 'NEAR', 'FTM', 'ALGO', 'XTZ', 'LTC', 'BCH', 'XRP', 'DOGE', 'SHIB'].includes(tickerUpper);
+        // Check if it's a cryptocurrency (expanded list)
+        const cryptoList = ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL', 'MATIC', 'AVAX', 'ATOM', 'NEAR', 'FTM', 'ALGO', 'XTZ', 'LTC', 'BCH', 'XRP', 'DOGE', 'SHIB', 'USDT', 'USDC', 'BNB', 'TRX', 'LUNC', 'APT', 'ARB', 'OP', 'SUI', 'TIA', 'INJ', 'SEI', 'WLD', 'PENDLE', 'JUP', 'PYTH', 'BONK', 'PEPE', 'FLOKI', 'BOME'];
+        const isCrypto = cryptoList.includes(tickerUpper);
         
         if (isCrypto) {
-            // Method 1: CoinMarketCap API for cryptocurrencies
+            // Method 1: CoinGecko API (primary source for crypto)
             try {
-                const response = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${tickerUpper}`, {
-                    headers: {
-                        'X-CMC_PRO_API_KEY': 'demo', // This will use the demo endpoint
-                        'Accept': 'application/json'
-                    }
-                });
+                const cryptoMapping = {
+                    'BTC': 'bitcoin', 'ETH': 'ethereum', 'ADA': 'cardano', 'DOT': 'polkadot',
+                    'LINK': 'chainlink', 'UNI': 'uniswap', 'AAVE': 'aave', 'SOL': 'solana',
+                    'MATIC': 'matic-network', 'AVAX': 'avalanche-2', 'ATOM': 'cosmos',
+                    'NEAR': 'near', 'FTM': 'fantom', 'ALGO': 'algorand', 'XTZ': 'tezos',
+                    'LTC': 'litecoin', 'BCH': 'bitcoin-cash', 'XRP': 'ripple',
+                    'DOGE': 'dogecoin', 'SHIB': 'shiba-inu', 'USDT': 'tether',
+                    'USDC': 'usd-coin', 'BNB': 'binancecoin', 'TRX': 'tron',
+                    'LUNC': 'terra-luna', 'APT': 'aptos', 'ARB': 'arbitrum',
+                    'OP': 'optimism', 'SUI': 'sui', 'TIA': 'celestia',
+                    'INJ': 'injective-protocol', 'SEI': 'sei-network',
+                    'WLD': 'worldcoin-wld', 'PENDLE': 'pendle', 'JUP': 'jupiter-exchange-solana',
+                    'PYTH': 'pyth-network', 'BONK': 'bonk', 'PEPE': 'pepe',
+                    'FLOKI': 'floki', 'BOME': 'book-of-meme'
+                };
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.data && data.data[tickerUpper] && data.data[tickerUpper].quote && data.data[tickerUpper].quote.USD) {
-                        price = data.data[tickerUpper].quote.USD.price;
-                        console.log('[PF] CoinMarketCap price fetched:', price);
-                    }
+                const cryptoId = cryptoMapping[tickerUpper] || ticker.toLowerCase();
+                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd`);
+                const data = await response.json();
+                
+                if (data[cryptoId] && data[cryptoId].usd) {
+                    price = data[cryptoId].usd;
+                    console.log('[PF] CoinGecko price fetched for', tickerUpper, ':', price);
+                } else {
+                    console.log('[PF] No price data found for', tickerUpper, 'with ID:', cryptoId);
                 }
-        } catch (error) {
-                console.log('[PF] CoinMarketCap failed:', error.message);
-            }
-            
-            // Method 2: CoinGecko fallback for crypto
-            if (!price) {
-                try {
-                    const cryptoId = tickerUpper === 'BTC' ? 'bitcoin' :
-                                   tickerUpper === 'ETH' ? 'ethereum' :
-                                   tickerUpper === 'ADA' ? 'cardano' :
-                                   tickerUpper === 'DOT' ? 'polkadot' :
-                                   tickerUpper === 'LINK' ? 'chainlink' :
-                                   tickerUpper === 'UNI' ? 'uniswap' :
-                                   tickerUpper === 'AAVE' ? 'aave' :
-                                   tickerUpper === 'SOL' ? 'solana' :
-                                   tickerUpper === 'MATIC' ? 'matic-network' :
-                                   tickerUpper === 'AVAX' ? 'avalanche-2' :
-                                   tickerUpper === 'ATOM' ? 'cosmos' :
-                                   tickerUpper === 'NEAR' ? 'near' :
-                                   tickerUpper === 'FTM' ? 'fantom' :
-                                   tickerUpper === 'ALGO' ? 'algorand' :
-                                   tickerUpper === 'XTZ' ? 'tezos' :
-                                   tickerUpper === 'LTC' ? 'litecoin' :
-                                   tickerUpper === 'BCH' ? 'bitcoin-cash' :
-                                   tickerUpper === 'XRP' ? 'ripple' :
-                                   tickerUpper === 'DOGE' ? 'dogecoin' :
-                                   tickerUpper === 'SHIB' ? 'shiba-inu' : ticker.toLowerCase();
-                    
-                    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd`);
-                    const data = await response.json();
-                    
-                    if (data[cryptoId] && data[cryptoId].usd) {
-                        price = data[cryptoId].usd;
-                        console.log('[PF] CoinGecko fallback price fetched:', price);
-                    }
-    } catch (error) {
-                    console.log('[PF] CoinGecko fallback failed:', error.message);
-                }
+            } catch (error) {
+                console.log('[PF] CoinGecko failed:', error.message);
             }
         } else {
             // Method 1: Google Finance API for stocks
@@ -1368,36 +1345,24 @@ async function fetchStockPrice(ticker) {
         // Method 4: Fallback to realistic demo prices (updated to current market values)
         if (!price) {
             const demoPrices = {
-                'AAPL': 189.25,
-                'GOOGL': 142.50,
-                'MSFT': 378.85,
-                'AMZN': 155.20,
-                'TSLA': 248.75,
-                'META': 485.30,
-                'NVDA': 875.60,
-                'BTC': 67000.00,
-                'ETH': 3450.00,
-                'ADA': 0.52,
-                'DOT': 7.25,
-                'LINK': 14.80,
-                'UNI': 11.20,
-                'AAVE': 105.50,
-                'SOL': 185.75,
-                'SPY': 545.20,
-                'QQQ': 445.80,
-                'VTI': 265.40,
-                'ARKK': 55.20,
-                'GME': 25.60,
-                'AMC': 4.85,
-                'COIN': 185.40,
-                'PLTR': 18.75,
-                'ROKU': 65.80,
-                'NFLX': 485.90,
-                'DIS': 105.60,
-                'WMT': 165.40,
-                'JPM': 195.80,
-                'BAC': 35.20,
-                'XOM': 118.50
+                // Stocks
+                'AAPL': 189.25, 'GOOGL': 142.50, 'MSFT': 378.85, 'AMZN': 155.20,
+                'TSLA': 248.75, 'META': 485.30, 'NVDA': 875.60, 'SPY': 545.20,
+                'QQQ': 445.80, 'VTI': 265.40, 'ARKK': 55.20, 'GME': 25.60,
+                'AMC': 4.85, 'COIN': 185.40, 'PLTR': 18.75, 'ROKU': 65.80,
+                'NFLX': 485.90, 'DIS': 105.60, 'WMT': 165.40, 'JPM': 195.80,
+                'BAC': 35.20, 'XOM': 118.50,
+                // Cryptocurrencies (current values)
+                'BTC': 95000.00, 'ETH': 3850.00, 'ADA': 0.45, 'DOT': 6.80,
+                'LINK': 14.20, 'UNI': 10.50, 'AAVE': 95.00, 'SOL': 165.00,
+                'MATIC': 0.85, 'AVAX': 28.50, 'ATOM': 8.20, 'NEAR': 4.80,
+                'FTM': 0.75, 'ALGO': 0.15, 'XTZ': 1.05, 'LTC': 95.00,
+                'BCH': 420.00, 'XRP': 0.52, 'DOGE': 0.08, 'SHIB': 0.000025,
+                'USDT': 1.00, 'USDC': 1.00, 'BNB': 580.00, 'TRX': 0.12,
+                'LUNC': 0.0001, 'APT': 8.50, 'ARB': 1.20, 'OP': 2.80,
+                'SUI': 1.65, 'TIA': 6.50, 'INJ': 28.00, 'SEI': 0.35,
+                'WLD': 3.20, 'PENDLE': 4.50, 'JUP': 0.85, 'PYTH': 0.45,
+                'BONK': 0.000025, 'PEPE': 0.000008, 'FLOKI': 0.00018, 'BOME': 0.012
             };
             
             if (demoPrices[ticker.toUpperCase()]) {
@@ -1427,9 +1392,9 @@ async function fetchStockPrice(ticker) {
         }
         
         if (isCrypto) {
-            showNotification(`CoinMarketCap price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+            showNotification(`✅ CoinGecko price for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
         } else {
-            showNotification(`Google Finance price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+            showNotification(`✅ Google Finance price for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
         }
         return price;
         
@@ -1443,7 +1408,7 @@ async function fetchStockPrice(ticker) {
             priceElement.textContent = `$${defaultPrice.toFixed(2)}`;
         }
         
-        showNotification(`Error fetching price for ${ticker}. Using fallback: $${defaultPrice.toFixed(2)}`, 'warning');
+        showNotification(`❌ Error fetching price for ${ticker}. Try a different ticker or enter manually.`, 'warning');
         return defaultPrice;
         
     } finally {
