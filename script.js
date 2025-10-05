@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add form submission handler (only one to prevent duplication)
     setTimeout(() => {
         const assetForm = document.getElementById('assetForm');
-        if (assetForm) {
+        if (assetForm && !assetForm.hasAttribute('data-listener-added')) {
             // Add single submit event listener
             assetForm.addEventListener('submit', function(event) {
                 console.log('[PF] Form submit event triggered');
@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             });
             
+            assetForm.setAttribute('data-listener-added', 'true');
             console.log('[PF] Form submit event listener added');
         }
         
@@ -368,6 +369,9 @@ function addAsset(category) {
     currentAddingCategory = category;
     console.log('[PF] Setting currentAddingCategory to:', category);
     
+    // Reset call counter when opening modal
+    window._assetSubmitCallCount = 0;
+    
     const modal = document.getElementById('assetModal');
     const modalTitle = document.getElementById('modalTitle');
     
@@ -500,11 +504,25 @@ function calculateDynamicValue() {
 // Form submission handler with robust session verification and localStorage handling
 function handleAssetSubmit(event) {
     event.preventDefault();
-    console.log('[PF] Asset form submit handler began');
+    
+    // Add call counter to detect multiple calls
+    if (!window._assetSubmitCallCount) {
+        window._assetSubmitCallCount = 0;
+    }
+    window._assetSubmitCallCount++;
+    
+    console.log('[PF] Asset form submit handler began - Call #' + window._assetSubmitCallCount);
     console.log('[PF] Current origin:', location.origin);
     console.log('[PF] Current adding category:', currentAddingCategory);
     console.log('[PF] Event type:', event.type);
     console.log('[PF] Event target:', event.target);
+    
+    // If this is a duplicate call, stop it
+    if (window._assetSubmitCallCount > 1) {
+        console.log('[PF] DUPLICATE CALL DETECTED - STOPPING');
+        event.stopImmediatePropagation();
+        return false;
+    }
     
     // Verify session before saving
     const currentEmail = localStorage.getItem('pf_current_email');
@@ -651,6 +669,9 @@ function handleAssetSubmit(event) {
     updateProfileStats();
     showNotification('Asset saved to your profile.', 'success');
     
+    // Reset call counter after successful completion
+    window._assetSubmitCallCount = 0;
+    
     console.log('[PF] Asset submission complete');
 }
 
@@ -673,7 +694,7 @@ function updateDisplay() {
 }
 
 function updateTotalValue() {
-    const totalValue = calculateTotalValue();
+        const totalValue = calculateTotalValue();
     const totalElement = document.getElementById('totalAmount');
     if (totalElement) {
         totalElement.textContent = `${totalValue.toLocaleString()}`;
