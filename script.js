@@ -187,6 +187,9 @@ function signIn(email, password) {
     renderProfileView();
     closeProfileModal();
     
+    // Auto-refresh to show user profile and assets
+    updateDisplay();
+    
     showNotification('Successfully signed in!', 'success');
 }
 
@@ -836,6 +839,20 @@ function updateChart() {
                             return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
                         }
                     }
+                },
+                datalabels: {
+                    display: true,
+                    color: '#ffffff',
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function(value, context) {
+                        if (value === 0) return '';
+                        return `$${value.toLocaleString()}`;
+                    },
+                    anchor: 'center',
+                    align: 'center'
                 }
             }
         }
