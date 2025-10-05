@@ -1279,7 +1279,7 @@ function closeCategoryModal() {
     }
 }
 
-// Real-time price fetching function
+// Real-time price fetching function using Google Finance and CoinMarketCap
 async function fetchStockPrice(ticker) {
     console.log('[PF] Fetching real-time price for ticker:', ticker);
     
@@ -1291,48 +1291,116 @@ async function fetchStockPrice(ticker) {
         }
         
         let price = null;
+        const tickerUpper = ticker.toUpperCase();
         
-        // Method 1: Try Yahoo Finance directly (most reliable)
-        try {
-            const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                
-                if (data.chart && data.chart.result && data.chart.result[0]) {
-                    price = data.chart.result[0].meta.regularMarketPrice;
-                    console.log('[PF] Yahoo Finance direct price fetched:', price);
-                }
-            }
-    } catch (error) {
-            console.log('[PF] Yahoo Finance direct failed:', error.message);
-        }
+        // Check if it's a cryptocurrency
+        const isCrypto = ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL', 'MATIC', 'AVAX', 'ATOM', 'NEAR', 'FTM', 'ALGO', 'XTZ', 'LTC', 'BCH', 'XRP', 'DOGE', 'SHIB'].includes(tickerUpper);
         
-        // Method 2: Try Yahoo Finance via CORS proxy
-        if (!price) {
+        if (isCrypto) {
+            // Method 1: CoinMarketCap API for cryptocurrencies
             try {
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`;
-                const response = await fetch(proxyUrl + yahooUrl, {
+                const response = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${tickerUpper}`, {
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CMC_PRO_API_KEY': 'demo', // This will use the demo endpoint
+                        'Accept': 'application/json'
                     }
                 });
-                const data = await response.json();
                 
-                if (data.chart && data.chart.result && data.chart.result[0]) {
-                    price = data.chart.result[0].meta.regularMarketPrice;
-                    console.log('[PF] Yahoo Finance proxy price fetched:', price);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data && data.data[tickerUpper] && data.data[tickerUpper].quote && data.data[tickerUpper].quote.USD) {
+                        price = data.data[tickerUpper].quote.USD.price;
+                        console.log('[PF] CoinMarketCap price fetched:', price);
+                    }
                 }
             } catch (error) {
-                console.log('[PF] Yahoo Finance proxy failed:', error.message);
+                console.log('[PF] CoinMarketCap failed:', error.message);
+            }
+            
+            // Method 2: CoinGecko fallback for crypto
+            if (!price) {
+                try {
+                    const cryptoId = tickerUpper === 'BTC' ? 'bitcoin' :
+                                   tickerUpper === 'ETH' ? 'ethereum' :
+                                   tickerUpper === 'ADA' ? 'cardano' :
+                                   tickerUpper === 'DOT' ? 'polkadot' :
+                                   tickerUpper === 'LINK' ? 'chainlink' :
+                                   tickerUpper === 'UNI' ? 'uniswap' :
+                                   tickerUpper === 'AAVE' ? 'aave' :
+                                   tickerUpper === 'SOL' ? 'solana' :
+                                   tickerUpper === 'MATIC' ? 'matic-network' :
+                                   tickerUpper === 'AVAX' ? 'avalanche-2' :
+                                   tickerUpper === 'ATOM' ? 'cosmos' :
+                                   tickerUpper === 'NEAR' ? 'near' :
+                                   tickerUpper === 'FTM' ? 'fantom' :
+                                   tickerUpper === 'ALGO' ? 'algorand' :
+                                   tickerUpper === 'XTZ' ? 'tezos' :
+                                   tickerUpper === 'LTC' ? 'litecoin' :
+                                   tickerUpper === 'BCH' ? 'bitcoin-cash' :
+                                   tickerUpper === 'XRP' ? 'ripple' :
+                                   tickerUpper === 'DOGE' ? 'dogecoin' :
+                                   tickerUpper === 'SHIB' ? 'shiba-inu' : ticker.toLowerCase();
+                    
+                    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd`);
+                    const data = await response.json();
+                    
+                    if (data[cryptoId] && data[cryptoId].usd) {
+                        price = data[cryptoId].usd;
+                        console.log('[PF] CoinGecko fallback price fetched:', price);
+                    }
+    } catch (error) {
+                    console.log('[PF] CoinGecko fallback failed:', error.message);
+                }
+            }
+        } else {
+            // Method 1: Google Finance API for stocks
+            try {
+                const response = await fetch(`https://www.google.com/finance/quote/${ticker}:NASDAQ`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                });
                 
-                // Try alternative proxy
+                if (response.ok) {
+                    const html = await response.text();
+                    // Parse the price from Google Finance HTML
+                    const priceMatch = html.match(/"price":"([0-9.]+)"/);
+                    if (priceMatch) {
+                        price = parseFloat(priceMatch[1]);
+                        console.log('[PF] Google Finance price fetched:', price);
+                    }
+                }
+            } catch (error) {
+                console.log('[PF] Google Finance direct failed:', error.message);
+            }
+            
+            // Method 2: Alternative - use a reliable stock API
+            if (!price) {
+                try {
+                    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.chart && data.chart.result && data.chart.result[0]) {
+                            price = data.chart.result[0].meta.regularMarketPrice;
+                            console.log('[PF] Yahoo Finance fallback price fetched:', price);
+                        }
+                    }
+    } catch (error) {
+                    console.log('[PF] Yahoo Finance fallback failed:', error.message);
+                }
+            }
+            
+            // Method 3: Alternative via proxy
+            if (!price) {
                 try {
                     const proxyUrl = 'https://api.allorigins.win/raw?url=';
                     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`;
@@ -1341,35 +1409,11 @@ async function fetchStockPrice(ticker) {
                     
                     if (data.chart && data.chart.result && data.chart.result[0]) {
                         price = data.chart.result[0].meta.regularMarketPrice;
-                        console.log('[PF] Yahoo Finance allorigins proxy price fetched:', price);
+                        console.log('[PF] Yahoo Finance proxy price fetched:', price);
                     }
-                } catch (error2) {
-                    console.log('[PF] Allorigins proxy also failed:', error2.message);
+                } catch (error) {
+                    console.log('[PF] Yahoo Finance proxy failed:', error.message);
                 }
-            }
-        }
-        
-        // Method 3: Try CoinGecko for crypto
-        if (!price && ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL'].includes(ticker.toUpperCase())) {
-            try {
-                const cryptoId = ticker.toUpperCase() === 'BTC' ? 'bitcoin' :
-                               ticker.toUpperCase() === 'ETH' ? 'ethereum' :
-                               ticker.toUpperCase() === 'ADA' ? 'cardano' :
-                               ticker.toUpperCase() === 'DOT' ? 'polkadot' :
-                               ticker.toUpperCase() === 'LINK' ? 'chainlink' :
-                               ticker.toUpperCase() === 'UNI' ? 'uniswap' :
-                               ticker.toUpperCase() === 'AAVE' ? 'aave' :
-                               ticker.toUpperCase() === 'SOL' ? 'solana' : ticker.toLowerCase();
-                
-                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd`);
-                const data = await response.json();
-                
-                if (data[cryptoId] && data[cryptoId].usd) {
-                    price = data[cryptoId].usd;
-                    console.log('[PF] CoinGecko price fetched:', price);
-                }
-            } catch (error) {
-                console.log('[PF] CoinGecko failed:', error.message);
             }
         }
         
@@ -1434,7 +1478,11 @@ async function fetchStockPrice(ticker) {
             priceElement.textContent = `$${price.toFixed(2)}`;
         }
         
-        showNotification(`Real-time price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+        if (isCrypto) {
+            showNotification(`CoinMarketCap price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+        } else {
+            showNotification(`Google Finance price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+        }
         return price;
         
     } catch (error) {
