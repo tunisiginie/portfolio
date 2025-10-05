@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup event listeners
     setupEventListeners();
     
+    // Initialize editable portfolio name
+    initializeEditablePortfolioName();
+    
     // Add form submission handler (only one to prevent duplication)
     setTimeout(() => {
         const assetForm = document.getElementById('assetForm');
@@ -1724,4 +1727,39 @@ window.debugAssetSaving = function() {
     }
     
     console.log('🔴 DEBUG: Asset Saving Test Complete');
+}
+
+// Initialize editable portfolio name
+function initializeEditablePortfolioName() {
+    const portfolioNameElement = document.getElementById('portfolioName');
+    if (!portfolioNameElement) return;
+    
+    // Load saved portfolio name from localStorage
+    const savedName = localStorage.getItem('pf_portfolio_name');
+    if (savedName) {
+        portfolioNameElement.textContent = savedName;
+    }
+    
+    // Add event listeners for editing
+    portfolioNameElement.addEventListener('blur', function() {
+        const newName = this.textContent.trim();
+        if (newName && newName !== '') {
+            localStorage.setItem('pf_portfolio_name', newName);
+            console.log('[PF] Portfolio name saved:', newName);
+        }
+    });
+    
+    portfolioNameElement.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur(); // Save and exit edit mode
+        }
+    });
+    
+    // Prevent empty names
+    portfolioNameElement.addEventListener('input', function() {
+        if (this.textContent.trim() === '') {
+            this.textContent = 'Oaklandish Portfolio';
+        }
+    });
 };
