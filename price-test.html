@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Fetching Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Price Fetching Test</h1>
+        <p>Test the price fetching functionality for different tickers.</p>
+        
+        <div>
+            <button class="test-button" onclick="testPrice('AAPL')">Test AAPL</button>
+            <button class="test-button" onclick="testPrice('TSLA')">Test TSLA</button>
+            <button class="test-button" onclick="testPrice('GOOGL')">Test GOOGL</button>
+            <button class="test-button" onclick="testPrice('BTC')">Test BTC</button>
+            <button class="test-button" onclick="testPrice('ETH')">Test ETH</button>
+            <button class="test-button" onclick="testPrice('NVDA')">Test NVDA</button>
+        </div>
+        
+        <div>
+            <input type="text" id="customTicker" placeholder="Enter custom ticker (e.g., MSFT)" style="padding: 8px; margin: 10px;">
+            <button class="test-button" onclick="testCustomPrice()">Test Custom</button>
+        </div>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        let results = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            results.push(logEntry);
+            console.log(logEntry);
+            updateResults();
+        }
+        
+        function updateResults() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = results.map(line => {
+                if (line.includes('SUCCESS') || line.includes('price fetched')) {
+                    return `<span class="success">${line}</span>`;
+                } else if (line.includes('failed') || line.includes('Error')) {
+                    return `<span class="error">${line}</span>`;
+                } else if (line.includes('fallback') || line.includes('demo')) {
+                    return `<span class="warning">${line}</span>`;
+                } else {
+                    return `<span class="info">${line}</span>`;
+                }
+            }).join('\n');
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        async function testPrice(ticker) {
+            log(`Testing price fetch for ${ticker}...`);
+            
+            try {
+                const price = await fetchStockPrice(ticker);
+                log(`✅ SUCCESS: ${ticker} price = $${price.toFixed(2)}`, 'success');
+            } catch (error) {
+                log(`❌ ERROR: Failed to fetch ${ticker} - ${error.message}`, 'error');
+            }
+            
+            log('');
+        }
+        
+        function testCustomPrice() {
+            const ticker = document.getElementById('customTicker').value.trim().toUpperCase();
+            if (ticker) {
+                testPrice(ticker);
+            } else {
+                log('❌ Please enter a ticker symbol', 'error');
+            }
+        }
+        
+        // Auto-run when page loads
+        window.addEventListener('load', function() {
+            log('🔍 Price Fetching Test Tool Loaded');
+            log('Click buttons above to test price fetching');
+            log('Check console for detailed logs');
+            log('');
+        });
+    </script>
+</body>
+</html>
