@@ -190,7 +190,7 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2 id="modalTitle">Add Asset</h2>
-            <form id="assetForm" onsubmit="return window._handleAssetSubmit(event)">
+            <form id="assetForm">
                 <div class="form-group">
                     <label for="assetName">Name:</label>
                     <input type="text" id="assetName" placeholder="Enter asset name">
@@ -329,9 +329,14 @@
                             <span class="btn-text">Sync Portfolio</span>
                         </button>
                         
-                        <button class="profile-btn backup-btn" onclick="downloadBackup()">
-                            <span class="btn-icon">💾</span>
-                            <span class="btn-text">Download Backup</span>
+                        <button class="profile-btn backup-btn" onclick="exportPortfolioData()">
+                            <span class="btn-icon">📤</span>
+                            <span class="btn-text">Export Data</span>
+                        </button>
+                        
+                        <button class="profile-btn import-btn" onclick="importPortfolioData()">
+                            <span class="btn-icon">📥</span>
+                            <span class="btn-text">Import Data</span>
                         </button>
                         
                         <button class="profile-btn logout-btn" onclick="logout()">

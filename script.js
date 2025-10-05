@@ -54,36 +54,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup event listeners
     setupEventListeners();
     
-    // CRITICAL: Add direct form submission handler to ensure it works
+    // Add form submission handler (only one to prevent duplication)
     setTimeout(() => {
         const assetForm = document.getElementById('assetForm');
         if (assetForm) {
-            // Remove any existing event listeners
-            assetForm.removeEventListener('submit', handleAssetSubmit);
-            
-            // Add direct submit event listener
+            // Add single submit event listener
             assetForm.addEventListener('submit', function(event) {
-                console.log('[PF] Direct form submit event listener triggered');
+                console.log('[PF] Form submit event triggered');
                 event.preventDefault();
                 event.stopPropagation();
                 handleAssetSubmit(event);
                 return false;
             });
             
-            console.log('[PF] Direct form submit event listener added');
-        }
-        
-        // Also add click handler to submit button as backup
-        const submitButton = document.getElementById('addAssetBtn');
-        if (submitButton) {
-            submitButton.addEventListener('click', function(event) {
-                console.log('[PF] Submit button click handler triggered');
-                event.preventDefault();
-                event.stopPropagation();
-                handleAssetSubmit(event);
-                return false;
-            });
-            console.log('[PF] Submit button click handler added');
+            console.log('[PF] Form submit event listener added');
         }
         
         // Add ticker input event listener to auto-fetch price
@@ -447,16 +431,7 @@ function addAsset(category) {
         staticRadio.setAttribute('data-listener-added', 'true');
     }
     
-    // Add backup submit button handler
-    const submitButton = document.getElementById('addAssetBtn');
-    if (submitButton && !submitButton.hasAttribute('data-backup-handler')) {
-        submitButton.addEventListener('click', function(event) {
-            console.log('[PF] Backup submit button clicked');
-            event.preventDefault();
-            handleAssetSubmit(event);
-        });
-        submitButton.setAttribute('data-backup-handler', 'true');
-    }
+    // Note: Form submission is handled by the main event listener in DOMContentLoaded
     
     // Open modal
     modal.style.display = 'block';
@@ -647,75 +622,27 @@ function handleAssetSubmit(event) {
         console.log('[PF] Ticker mode - shares:', shares, 'price:', price, 'total:', assetValue);
     }
     
-    // Harden localStorage reads/writes
-    let portfolios;
-    try {
-        const portfoliosData = localStorage.getItem('pf_portfolios');
-        portfolios = portfoliosData ? JSON.parse(portfoliosData) : {};
-        if (typeof portfolios !== 'object' || portfolios === null) {
-            portfolios = {};
-        }
-    } catch (error) {
-        console.log('[PF] Error parsing portfolios, resetting to empty object');
-        portfolios = {};
+    // Check for duplicate assets before adding
+    const existingAsset = portfolio[currentAddingCategory].find(a => 
+        a.name === asset.name && 
+        a.ticker === asset.ticker && 
+        Math.abs(a.value - asset.value) < 0.01 // Allow for small floating point differences
+    );
+    
+    if (existingAsset) {
+        console.log('[PF] Duplicate asset detected, not adding:', asset.name);
+        showNotification('Asset already exists in your portfolio', 'warning');
+        return false;
     }
     
-    // Create/ensure portfolio object for user
-    if (!portfolios[currentEmail]) {
-        portfolios[currentEmail] = {
-            assets: {
-                stocks: [],
-                crypto: [],
-                checking: [],
-                savings: [],
-                roth: [],
-                'real-estate': [],
-                vehicles: [],
-                other: []
-            },
-            lastSync: new Date().toISOString()
-        };
-    }
+    // Add asset to global portfolio state
+    portfolio[currentAddingCategory].push(asset);
+    console.log('[PF] Added asset to global portfolio:', asset.name);
     
-    // Add asset to user's portfolio
-    portfolios[currentEmail].assets[currentAddingCategory].push(asset);
-    portfolios[currentEmail].lastSync = new Date().toISOString();
-    
-    console.log('[PF] About to write to localStorage:', portfolios[currentEmail]);
-    
-    // Write back to localStorage
-    try {
-        localStorage.setItem('pf_portfolios', JSON.stringify(portfolios));
-        console.log('[PF] Successfully wrote to localStorage');
-    } catch (error) {
-        console.error('[PF] Error writing to localStorage:', error);
-        showNotification('Error saving asset. Please try again.', 'error');
-        return;
-    }
-    
-    // Immediately read back and verify
-    try {
-        const verifyData = JSON.parse(localStorage.getItem('pf_portfolios'));
-        const userAssets = verifyData[currentEmail].assets[currentAddingCategory];
-        const assetCount = userAssets.length;
-        console.log('[PF] Read back verification - asset count:', assetCount);
-        console.log('[PF] Read back data:', verifyData[currentEmail]);
-        
-        if (assetCount === 0) {
-            console.error('[PF] ERROR: Asset count is 0 after save!');
-        }
-    } catch (error) {
-        console.error('[PF] Error verifying save:', error);
-    }
-    
-    // Update local portfolio state (avoid duplication)
-    // Only add to global portfolio if not already added
-    const existingAsset = portfolio[currentAddingCategory].find(a => a.id === asset.id);
-    if (!existingAsset) {
-        portfolio[currentAddingCategory].push(asset);
-        console.log('[PF] Added asset to global portfolio');
-    } else {
-        console.log('[PF] Asset already exists in global portfolio, skipping');
+    // Save the updated portfolio to localStorage
+    if (currentUser) {
+        saveUserPortfolio();
+        console.log('[PF] Portfolio saved to localStorage');
     }
     
     // Update UI after successful save
@@ -1313,7 +1240,7 @@ async function fetchStockPrice(ticker) {
                         console.log('[PF] CoinMarketCap price fetched:', price);
                     }
                 }
-            } catch (error) {
+        } catch (error) {
                 console.log('[PF] CoinMarketCap failed:', error.message);
             }
             
@@ -1639,6 +1566,82 @@ window.fixAuth = function(email, password) {
     
     console.log('🔧 AUTHENTICATION FIXED');
     console.log('You should now be signed in as:', email);
+};
+
+// Export portfolio data for transfer between browsers/windows
+window.exportPortfolioData = function() {
+    if (!currentUser) {
+        showNotification('Please sign in to export data', 'error');
+        return;
+    }
+    
+    const exportData = {
+        users: JSON.parse(localStorage.getItem('pf_users') || '{}'),
+        portfolios: JSON.parse(localStorage.getItem('pf_portfolios') || '{}'),
+        currentEmail: localStorage.getItem('pf_current_email'),
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `portfolio-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Portfolio data exported successfully!', 'success');
+    console.log('Portfolio data exported:', exportData);
+};
+
+// Import portfolio data from backup file
+window.importPortfolioData = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importData = JSON.parse(e.target.result);
+                
+                // Validate import data
+                if (!importData.users || !importData.portfolios) {
+                    showNotification('Invalid backup file format', 'error');
+                    return;
+                }
+                
+                // Import the data
+                localStorage.setItem('pf_users', JSON.stringify(importData.users));
+                localStorage.setItem('pf_portfolios', JSON.stringify(importData.portfolios));
+                if (importData.currentEmail) {
+                    localStorage.setItem('pf_current_email', importData.currentEmail);
+                }
+                
+                // Reload the page to apply changes
+                showNotification('Portfolio data imported successfully! Reloading...', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+        
+    } catch (error) {
+                console.error('Import error:', error);
+                showNotification('Error importing data: ' + error.message, 'error');
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
 };
 
 // DEBUG: Comprehensive asset saving test
