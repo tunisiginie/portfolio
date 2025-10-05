@@ -48,9 +48,77 @@
                     </div>
                 </div>
                 <div class="portfolio-controls">
-                    <button class="refresh-btn" id="manualRefreshBtn" onclick="manualRefresh()">
+                    <button class="refresh-btn" id="manualRefreshBtn" onclick="updateDisplay()">
                         <span class="refresh-icon">🔄</span>
                         <span class="refresh-text">Refresh</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testAddAsset()" style="background: #e74c3c; margin-left: 10px;">
+                        <span class="refresh-icon">🧪</span>
+                        <span class="refresh-text">Test Chart</span>
+                    </button>
+                    <button class="refresh-btn" onclick="debugPortfolioData()" style="background: #8b5cf6; margin-left: 10px;">
+                        <span class="refresh-icon">🐛</span>
+                        <span class="refresh-text">Debug</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testDirectAssetAdd()" style="background: #f59e0b; margin-left: 10px;">
+                        <span class="refresh-icon">🧪</span>
+                        <span class="refresh-text">Test Direct</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testFormSubmission()" style="background: #10b981; margin-left: 10px;">
+                        <span class="refresh-icon">📝</span>
+                        <span class="refresh-text">Test Form</span>
+                    </button>
+                    <button class="refresh-btn" onclick="ultimateTest()" style="background: #dc2626; margin-left: 10px;">
+                        <span class="refresh-icon">🔥</span>
+                        <span class="refresh-text">Ultimate Test</span>
+                    </button>
+                    <button class="refresh-btn" onclick="checkFormStatus()" style="background: #6366f1; margin-left: 10px;">
+                        <span class="refresh-icon">📊</span>
+                        <span class="refresh-text">Check Form</span>
+                    </button>
+                    <button class="refresh-btn" onclick="simulateSubmitClick()" style="background: #059669; margin-left: 10px;">
+                        <span class="refresh-icon">👆</span>
+                        <span class="refresh-text">Simulate Click</span>
+                    </button>
+                    <button class="refresh-btn" onclick="forceSavePortfolio()" style="background: #7c3aed; margin-left: 10px;">
+                        <span class="refresh-icon">💾</span>
+                        <span class="refresh-text">Force Save</span>
+                    </button>
+                    <button class="refresh-btn" onclick="verifyPortfolioReference()" style="background: #0891b2; margin-left: 10px;">
+                        <span class="refresh-icon">🔍</span>
+                        <span class="refresh-text">Verify Ref</span>
+                    </button>
+                    <button class="refresh-btn" onclick="completeTest()" style="background: #be185d; margin-left: 10px;">
+                        <span class="refresh-icon">🎯</span>
+                        <span class="refresh-text">Complete Test</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testPortfolioReference()" style="background: #dc2626; margin-left: 10px;">
+                        <span class="refresh-icon">🔗</span>
+                        <span class="refresh-text">Test Ref</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testFormSubmissionDirectly()" style="background: #ea580c; margin-left: 10px;">
+                        <span class="refresh-icon">📋</span>
+                        <span class="refresh-text">Test Form</span>
+                    </button>
+                    <button class="refresh-btn" onclick="runFullDiagnostic()" style="background: #dc2626; margin-left: 10px; font-size: 12px;">
+                        <span class="refresh-icon">🔬</span>
+                        <span class="refresh-text">Full Diagnostic</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testModalVisibility()" style="background: #7c2d12; margin-left: 10px; font-size: 12px;">
+                        <span class="refresh-icon">👁️</span>
+                        <span class="refresh-text">Test Modal</span>
+                    </button>
+                    <button class="refresh-btn" onclick="ultimateBypassTest()" style="background: #991b1b; margin-left: 10px; font-size: 12px;">
+                        <span class="refresh-icon">🚀</span>
+                        <span class="refresh-text">Bypass Test</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testAllAssetTypes()" style="background: #059669; margin-left: 10px; font-size: 12px;">
+                        <span class="refresh-icon">🎯</span>
+                        <span class="refresh-text">Test All Types</span>
+                    </button>
+                    <button class="refresh-btn" onclick="testCompleteWorkflowAllTypes()" style="background: #7c2d12; margin-left: 10px; font-size: 12px;">
+                        <span class="refresh-icon">🔥</span>
+                        <span class="refresh-text">Complete Test</span>
                     </button>
                 </div>
             </div>
@@ -82,6 +150,7 @@
             <!-- Asset items will be dynamically generated here -->
         </div>
 
+
         <!-- Quick Add Assets Section -->
         <div class="quick-add-section">
             <h3>Quick Add Assets</h3>
@@ -109,6 +178,14 @@
                 <button class="quick-add-btn vehicles" onclick="addAsset('vehicles')">
                     <div class="quick-add-icon">🚗</div>
                     <div class="quick-add-text">Add Vehicle</div>
+                </button>
+                <button class="quick-add-btn savings" onclick="addAsset('savings')">
+                    <div class="quick-add-icon">🏦</div>
+                    <div class="quick-add-text">Add Savings</div>
+                </button>
+                <button class="quick-add-btn other" onclick="addAsset('other')">
+                    <div class="quick-add-icon">📦</div>
+                    <div class="quick-add-text">Add Other</div>
                 </button>
             </div>
         </div>
@@ -181,10 +258,10 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2 id="modalTitle">Add Asset</h2>
-            <form id="assetForm">
+            <form id="assetForm" onsubmit="return window._handleAssetSubmit(event)">
                 <div class="form-group">
                     <label for="assetName">Name:</label>
-                    <input type="text" id="assetName" required>
+                    <input type="text" id="assetName" placeholder="Enter asset name">
                 </div>
                 
                 <!-- Input type selector -->
@@ -192,12 +269,12 @@
                     <label>Input Type:</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="inputType" value="ticker" id="tickerRadio">
+                            <input type="radio" name="inputType" value="ticker" id="tickerRadio" checked>
                             <span class="radio-custom"></span>
                             <span id="tickerLabel">Ticker & Shares (Auto-update price)</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="inputType" value="static" id="staticRadio" checked>
+                            <input type="radio" name="inputType" value="static" id="staticRadio">
                             <span class="radio-custom"></span>
                             Static Value
                         </label>
@@ -205,14 +282,18 @@
                 </div>
                 
                 <!-- Ticker inputs -->
-                <div id="tickerInputs" style="display: none;">
+                <div id="tickerInputs" style="display: block;">
                     <div class="form-group">
                         <label for="stockTicker" id="tickerInputLabel">Ticker:</label>
                         <input type="text" id="stockTicker" placeholder="e.g., AAPL" style="text-transform: uppercase;">
                     </div>
                     <div class="form-group">
-                        <label>Current Price: <span id="currentPrice">$0.00</span></label>
-                        <button type="button" id="fetchPriceBtn" class="fetch-btn">Fetch Current Price</button>
+                        <label>Current Price: 
+                            <span id="currentPrice">$0.00</span>
+                            <span id="priceLoader" class="price-loader" style="display: none;">Loading...</span>
+                        </label>
+                        <button type="button" onclick="fetchStockPrice(document.getElementById('stockTicker').value)" style="margin-left: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Fetch Price</button>
+                        <button type="button" onclick="setManualPrice()" style="margin-left: 5px; padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Set Manual</button>
                     </div>
                     
                     <!-- Dynamic input toggle -->
@@ -236,14 +317,14 @@
                 </div>
                 
                 <!-- Static value input -->
-                <div id="staticInput">
+                <div id="staticInput" style="display:none;">
                     <div class="form-group">
                         <label for="assetValue">Value ($):</label>
-                        <input type="number" id="assetValue" step="0.01" min="0" required>
+                        <input type="number" id="assetValue" step="0.01" min="0">
                     </div>
                 </div>
                 
-                <button type="submit" class="submit-btn">Add Asset</button>
+                <button type="submit" class="submit-btn" id="addAssetBtn">Add Asset</button>
             </form>
         </div>
     </div>

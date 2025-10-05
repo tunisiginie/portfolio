@@ -695,6 +695,101 @@ body {
     border-color: #0052ff;
 }
 
+/* Price Loading Circle */
+.price-loader {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #404040;
+    border-radius: 50%;
+    border-top-color: #0052ff;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Asset Dropdown */
+.asset-dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.asset-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #2a2a2a;
+    min-width: 100%;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+    border-radius: 8px;
+    z-index: 1000;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    border: 1px solid #404040;
+    overflow: hidden;
+}
+
+.asset-dropdown-content.show {
+    display: block;
+}
+
+.dropdown-asset-item {
+    color: #ffffff;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #404040;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-asset-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-asset-item:hover {
+    background-color: #404040;
+}
+
+.dropdown-asset-name {
+    font-weight: 500;
+    flex: 1;
+}
+
+.dropdown-asset-value {
+    font-weight: 600;
+    color: #00d4aa;
+}
+
+.dropdown-asset-details {
+    font-size: 12px;
+    color: #888888;
+    margin-top: 4px;
+}
+
+.dropdown-add-btn {
+    background: #0052ff;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    width: 100%;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-add-btn:hover {
+    background: #0043cc;
+}
+
 /* Fetch button styles */
 .fetch-btn {
     background: #0052ff;
