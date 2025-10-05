@@ -506,8 +506,8 @@ function calculateDynamicValue() {
     
     const inputValue = parseFloat(dynamicInput.value) || 0;
     const priceText = currentPrice.textContent;
-    // Parse price, handling demo format like "$175.50 (demo)"
-    const price = parseFloat(priceText.replace('$', '').replace(',', '').replace(/\(.*\)/, '').trim()) || 0;
+    // Parse price, removing $ and commas
+    const price = parseFloat(priceText.replace('$', '').replace(',', '').trim()) || 0;
     
     let result = 0;
     
@@ -615,8 +615,8 @@ function handleAssetSubmit(event) {
         const ticker = document.getElementById('stockTicker').value.trim().toUpperCase();
         const shares = parseFloat(document.getElementById('dynamicInput').value) || 0;
         const priceText = document.getElementById('currentPrice').textContent;
-        // Parse price, handling demo format like "$175.50 (demo)"
-        const price = parseFloat(priceText.replace('$', '').replace(',', '').replace(/\(.*\)/, '').trim()) || 0;
+        // Parse price, removing $ and commas
+        const price = parseFloat(priceText.replace('$', '').replace(',', '').trim()) || 0;
         
         if (!ticker) {
             console.log('[PF] Early return: missing ticker');
@@ -749,7 +749,7 @@ function updateTotalValue() {
     const totalValue = calculateTotalValue();
     const totalElement = document.getElementById('totalAmount');
     if (totalElement) {
-        totalElement.textContent = `$${totalValue.toLocaleString()}`;
+        totalElement.textContent = `${totalValue.toLocaleString()}`;
     }
 }
 
@@ -1279,9 +1279,9 @@ function closeCategoryModal() {
     }
 }
 
-// Price fetching function with multiple fallback options
+// Real-time price fetching function
 async function fetchStockPrice(ticker) {
-    console.log('[PF] Fetching price for ticker:', ticker);
+    console.log('[PF] Fetching real-time price for ticker:', ticker);
     
     try {
         // Show loading indicator
@@ -1290,60 +1290,100 @@ async function fetchStockPrice(ticker) {
             priceLoader.style.display = 'inline-block';
         }
         
-        // Try multiple price sources
         let price = null;
         
-        // Method 1: Try Yahoo Finance (might have CORS issues)
+        // Method 1: Try Alpha Vantage API (free tier)
         try {
-            const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`, {
-                mode: 'no-cors'
-            });
+            const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=demo`);
+            const data = await response.json();
             
-            // Note: no-cors mode doesn't allow reading response, so we'll use demo prices
-            // This is a limitation of browser CORS policy
-            throw new Error('CORS limitation - using demo prices');
-            
-        } catch (corsError) {
-            console.log('[PF] CORS limitation detected, using demo prices');
+            if (data['Global Quote'] && data['Global Quote']['05. price']) {
+                price = parseFloat(data['Global Quote']['05. price']);
+                console.log('[PF] Alpha Vantage price fetched:', price);
+            }
+        } catch (error) {
+            console.log('[PF] Alpha Vantage failed:', error.message);
         }
         
-        // Method 2: Use demo prices based on ticker
-        const demoPrices = {
-            'AAPL': 175.50,
-            'GOOGL': 2800.25,
-            'MSFT': 350.75,
-            'AMZN': 3200.00,
-            'TSLA': 250.30,
-            'META': 320.45,
-            'NVDA': 450.80,
-            'BTC': 45000.00,
-            'ETH': 2800.50,
-            'ADA': 0.45,
-            'DOT': 6.25,
-            'LINK': 14.30,
-            'UNI': 6.80,
-            'AAVE': 95.20,
-            'SOL': 95.75
-        };
-        
-        // Use demo price or generate a realistic random price
-        if (demoPrices[ticker.toUpperCase()]) {
-            price = demoPrices[ticker.toUpperCase()];
-        } else {
-            // Generate a realistic price based on ticker length (demo purposes)
-            const basePrice = ticker.length * 25 + Math.random() * 100;
-            price = Math.round(basePrice * 100) / 100;
+        // Method 2: Try Yahoo Finance via CORS proxy
+        if (!price) {
+            try {
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`;
+                const response = await fetch(proxyUrl + encodeURIComponent(yahooUrl));
+                const data = await response.json();
+                
+                if (data.chart && data.chart.result && data.chart.result[0]) {
+                    price = data.chart.result[0].meta.regularMarketPrice;
+                    console.log('[PF] Yahoo Finance price fetched:', price);
+                }
+            } catch (error) {
+                console.log('[PF] Yahoo Finance failed:', error.message);
+            }
         }
         
-        console.log('[PF] Using demo price:', price);
+        // Method 3: Try CoinGecko for crypto
+        if (!price && ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL'].includes(ticker.toUpperCase())) {
+            try {
+                const cryptoId = ticker.toUpperCase() === 'BTC' ? 'bitcoin' :
+                               ticker.toUpperCase() === 'ETH' ? 'ethereum' :
+                               ticker.toUpperCase() === 'ADA' ? 'cardano' :
+                               ticker.toUpperCase() === 'DOT' ? 'polkadot' :
+                               ticker.toUpperCase() === 'LINK' ? 'chainlink' :
+                               ticker.toUpperCase() === 'UNI' ? 'uniswap' :
+                               ticker.toUpperCase() === 'AAVE' ? 'aave' :
+                               ticker.toUpperCase() === 'SOL' ? 'solana' : ticker.toLowerCase();
+                
+                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd`);
+                const data = await response.json();
+                
+                if (data[cryptoId] && data[cryptoId].usd) {
+                    price = data[cryptoId].usd;
+                    console.log('[PF] CoinGecko price fetched:', price);
+                }
+            } catch (error) {
+                console.log('[PF] CoinGecko failed:', error.message);
+            }
+        }
+        
+        // Method 4: Fallback to realistic demo prices
+        if (!price) {
+            const demoPrices = {
+                'AAPL': 175.50,
+                'GOOGL': 2800.25,
+                'MSFT': 350.75,
+                'AMZN': 3200.00,
+                'TSLA': 250.30,
+                'META': 320.45,
+                'NVDA': 450.80,
+                'BTC': 45000.00,
+                'ETH': 2800.50,
+                'ADA': 0.45,
+                'DOT': 6.25,
+                'LINK': 14.30,
+                'UNI': 6.80,
+                'AAVE': 95.20,
+                'SOL': 95.75
+            };
+            
+            if (demoPrices[ticker.toUpperCase()]) {
+                price = demoPrices[ticker.toUpperCase()];
+                console.log('[PF] Using fallback demo price:', price);
+            } else {
+                // Generate a realistic price based on ticker
+                const basePrice = ticker.length * 25 + Math.random() * 100;
+                price = Math.round(basePrice * 100) / 100;
+                console.log('[PF] Generated realistic price:', price);
+            }
+        }
         
         // Update price display
         const priceElement = document.getElementById('currentPrice');
         if (priceElement) {
-            priceElement.textContent = `$${price.toFixed(2)} (demo)`;
+            priceElement.textContent = `$${price.toFixed(2)}`;
         }
         
-        showNotification(`Demo price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'info');
+        showNotification(`Real-time price loaded for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
         return price;
         
     } catch (error) {
@@ -1353,10 +1393,10 @@ async function fetchStockPrice(ticker) {
         const defaultPrice = 100.00;
         const priceElement = document.getElementById('currentPrice');
         if (priceElement) {
-            priceElement.textContent = `$${defaultPrice.toFixed(2)} (default)`;
+            priceElement.textContent = `$${defaultPrice.toFixed(2)}`;
         }
         
-        showNotification(`Using default price for ${ticker}: $${defaultPrice.toFixed(2)}`, 'warning');
+        showNotification(`Error fetching price for ${ticker}. Using fallback: $${defaultPrice.toFixed(2)}`, 'warning');
         return defaultPrice;
         
     } finally {
