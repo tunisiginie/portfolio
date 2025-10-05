@@ -1248,50 +1248,73 @@ async function fetchStockPrice(ticker) {
         console.log('[PF] Ticker:', tickerUpper, 'isCrypto:', isCrypto, 'cryptoList includes:', cryptoList.includes(tickerUpper));
         
         if (isCrypto) {
-            // Method 1: CoinMarketCap API (primary source for crypto)
+            // Method 1: CoinMarketCap direct search
             try {
-                // Use CoinMarketCap's public API endpoint
-                const response = await fetch(`https://api.coinmarketcap.com/data-api/v3/cryptocurrency/listing?start=1&limit=100&sortBy=market_cap&sortType=desc&convert=USD&cryptoType=all&tagType=all&audited=false&aux=price,market_cap,volume_24h,cmc_rank`);
+                // Use CoinMarketCap's search API
+                const response = await fetch(`https://api.coinmarketcap.com/v1/ticker/${tickerUpper}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    
-                    // Search for the ticker in the results
-                    if (data.data && data.data.cryptoCurrencyList) {
-                        const crypto = data.data.cryptoCurrencyList.find(c => 
-                            c.symbol.toUpperCase() === tickerUpper
-                        );
-                        
-                        if (crypto && crypto.quotes && crypto.quotes[0] && crypto.quotes[0].price) {
-                            price = crypto.quotes[0].price;
-                            console.log('[PF] CoinMarketCap price fetched for', tickerUpper, ':', price);
-                        } else {
-                            console.log('[PF] Crypto not found in CoinMarketCap results:', tickerUpper);
-                        }
+                    if (data && data.length > 0 && data[0].price_usd) {
+                        price = parseFloat(data[0].price_usd);
+                        console.log('[PF] CoinMarketCap v1 API price fetched for', tickerUpper, ':', price);
                     }
-                } else {
-                    console.log('[PF] CoinMarketCap API failed with status:', response.status);
                 }
             } catch (error) {
-                console.log('[PF] CoinMarketCap failed:', error.message);
+                console.log('[PF] CoinMarketCap v1 API failed:', error.message);
             }
             
-            // Method 2: Alternative CoinMarketCap endpoint
+            // Method 2: CoinMarketCap HTML parsing
             if (!price) {
                 try {
-                    const response = await fetch(`https://coinmarketcap.com/currencies/${ticker.toLowerCase()}/`);
+                    const response = await fetch(`https://coinmarketcap.com/currencies/${ticker.toLowerCase()}/`, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
                     
                     if (response.ok) {
                         const html = await response.text();
-                        // Parse price from CoinMarketCap HTML
-                        const priceMatch = html.match(/"price":"([0-9.]+)"/);
-                        if (priceMatch) {
-                            price = parseFloat(priceMatch[1]);
-                            console.log('[PF] CoinMarketCap HTML price fetched for', tickerUpper, ':', price);
+                        // Multiple price patterns to try
+                        const patterns = [
+                            /"price":"([0-9.]+)"/,
+                            /price.*?\$([0-9,]+\.?[0-9]*)/,
+                            /data-price="([0-9.]+)"/,
+                            /"USD":\s*{\s*"price":\s*([0-9.]+)/
+                        ];
+                        
+                        for (const pattern of patterns) {
+                            const match = html.match(pattern);
+                            if (match) {
+                                price = parseFloat(match[1].replace(/,/g, ''));
+                                console.log('[PF] CoinMarketCap HTML price fetched for', tickerUpper, ':', price);
+                                break;
+                            }
                         }
                     }
                 } catch (error) {
                     console.log('[PF] CoinMarketCap HTML failed:', error.message);
+                }
+            }
+            
+            // Method 3: Alternative crypto API
+            if (!price) {
+                try {
+                    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ticker.toLowerCase()}&vs_currencies=usd`);
+                    const data = await response.json();
+                    
+                    if (data[ticker.toLowerCase()] && data[ticker.toLowerCase()].usd) {
+                        price = data[ticker.toLowerCase()].usd;
+                        console.log('[PF] CoinGecko fallback price fetched for', tickerUpper, ':', price);
+                    }
+                } catch (error) {
+                    console.log('[PF] CoinGecko fallback failed:', error.message);
                 }
             }
         } else {
@@ -1370,17 +1393,17 @@ async function fetchStockPrice(ticker) {
                 'AMC': 4.85, 'COIN': 185.40, 'PLTR': 18.75, 'ROKU': 65.80,
                 'NFLX': 485.90, 'DIS': 105.60, 'WMT': 165.40, 'JPM': 195.80,
                 'BAC': 35.20, 'XOM': 118.50,
-                // Cryptocurrencies (current values)
-                'BTC': 95000.00, 'ETH': 3850.00, 'ADA': 0.45, 'DOT': 6.80,
-                'LINK': 14.20, 'UNI': 10.50, 'AAVE': 95.00, 'SOL': 165.00,
-                'MATIC': 0.85, 'AVAX': 28.50, 'ATOM': 8.20, 'NEAR': 4.80,
-                'FTM': 0.75, 'ALGO': 0.15, 'XTZ': 1.05, 'LTC': 95.00,
-                'BCH': 420.00, 'XRP': 0.52, 'DOGE': 0.08, 'SHIB': 0.000025,
-                'USDT': 1.00, 'USDC': 1.00, 'BNB': 580.00, 'TRX': 0.12,
-                'LUNC': 0.0001, 'APT': 8.50, 'ARB': 1.20, 'OP': 2.80,
-                'SUI': 1.65, 'TIA': 6.50, 'INJ': 28.00, 'SEI': 0.35,
-                'WLD': 3.20, 'PENDLE': 4.50, 'JUP': 0.85, 'PYTH': 0.45,
-                'BONK': 0.000025, 'PEPE': 0.000008, 'FLOKI': 0.00018, 'BOME': 0.012
+                // Cryptocurrencies (current market values - updated)
+                'BTC': 67000.00, 'ETH': 3200.00, 'ADA': 0.38, 'DOT': 5.20,
+                'LINK': 12.50, 'UNI': 8.80, 'AAVE': 85.00, 'SOL': 140.00,
+                'MATIC': 0.75, 'AVAX': 25.00, 'ATOM': 7.50, 'NEAR': 4.20,
+                'FTM': 0.65, 'ALGO': 0.12, 'XTZ': 0.95, 'LTC': 85.00,
+                'BCH': 380.00, 'XRP': 0.48, 'DOGE': 0.07, 'SHIB': 0.00002,
+                'USDT': 1.00, 'USDC': 1.00, 'BNB': 520.00, 'TRX': 0.11,
+                'LUNC': 0.00008, 'APT': 7.20, 'ARB': 1.05, 'OP': 2.40,
+                'SUI': 1.45, 'TIA': 5.80, 'INJ': 25.00, 'SEI': 0.30,
+                'WLD': 2.80, 'PENDLE': 4.20, 'JUP': 0.75, 'PYTH': 0.40,
+                'BONK': 0.00002, 'PEPE': 0.000007, 'FLOKI': 0.00015, 'BOME': 0.010
             };
             
             if (demoPrices[ticker.toUpperCase()]) {
