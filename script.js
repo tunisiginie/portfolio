@@ -1245,6 +1245,8 @@ async function fetchStockPrice(ticker) {
         const cryptoList = ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL', 'MATIC', 'AVAX', 'ATOM', 'NEAR', 'FTM', 'ALGO', 'XTZ', 'LTC', 'BCH', 'XRP', 'DOGE', 'SHIB', 'USDT', 'USDC', 'BNB', 'TRX', 'LUNC', 'APT', 'ARB', 'OP', 'SUI', 'TIA', 'INJ', 'SEI', 'WLD', 'PENDLE', 'JUP', 'PYTH', 'BONK', 'PEPE', 'FLOKI', 'BOME'];
         const isCrypto = cryptoList.includes(tickerUpper);
         
+        console.log('[PF] Ticker:', tickerUpper, 'isCrypto:', isCrypto);
+        
         if (isCrypto) {
             // Method 1: CoinGecko API (primary source for crypto)
             try {
@@ -1273,11 +1275,13 @@ async function fetchStockPrice(ticker) {
                     console.log('[PF] CoinGecko price fetched for', tickerUpper, ':', price);
                 } else {
                     console.log('[PF] No price data found for', tickerUpper, 'with ID:', cryptoId);
+                    console.log('[PF] CoinGecko response:', data);
                 }
             } catch (error) {
                 console.log('[PF] CoinGecko failed:', error.message);
             }
         } else {
+            console.log('[PF] Treating', tickerUpper, 'as a stock ticker');
             // Method 1: Google Finance API for stocks
             try {
                 const response = await fetch(`https://www.google.com/finance/quote/${ticker}:NASDAQ`, {
