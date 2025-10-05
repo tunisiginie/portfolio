@@ -1245,7 +1245,7 @@ async function fetchStockPrice(ticker) {
         const cryptoList = ['BTC', 'ETH', 'ADA', 'DOT', 'LINK', 'UNI', 'AAVE', 'SOL', 'MATIC', 'AVAX', 'ATOM', 'NEAR', 'FTM', 'ALGO', 'XTZ', 'LTC', 'BCH', 'XRP', 'DOGE', 'SHIB', 'USDT', 'USDC', 'BNB', 'TRX', 'LUNC', 'APT', 'ARB', 'OP', 'SUI', 'TIA', 'INJ', 'SEI', 'WLD', 'PENDLE', 'JUP', 'PYTH', 'BONK', 'PEPE', 'FLOKI', 'BOME'];
         const isCrypto = cryptoList.includes(tickerUpper);
         
-        console.log('[PF] Ticker:', tickerUpper, 'isCrypto:', isCrypto);
+        console.log('[PF] Ticker:', tickerUpper, 'isCrypto:', isCrypto, 'cryptoList includes:', cryptoList.includes(tickerUpper));
         
         if (isCrypto) {
             // Method 1: CoinGecko API (primary source for crypto)
@@ -1395,11 +1395,15 @@ async function fetchStockPrice(ticker) {
             priceElement.textContent = `$${price.toFixed(2)}`;
         }
         
+        // Determine the actual source used
+        let sourceUsed = 'Unknown';
         if (isCrypto) {
-            showNotification(`✅ CoinGecko price for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+            sourceUsed = 'CoinGecko';
         } else {
-            showNotification(`✅ Google Finance price for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
+            sourceUsed = 'Google Finance';
         }
+        
+        showNotification(`✅ ${sourceUsed} price for ${ticker.toUpperCase()}: $${price.toFixed(2)}`, 'success');
         return price;
         
     } catch (error) {
